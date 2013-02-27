@@ -1,0 +1,321 @@
+/**
+ * This task will generate the new project layout structure for JavaFX. The entire new project
+ * structure is generated beneath a new directory simply called "javafx". The idea is that this
+ * could become a single repo under which all public JavaFX sources live (rather than where we
+ * presently have multiple repositories).
+ *
+ * Items left to do:
+ *  - javafx checkstyle
+ *  - media
+ *  - apps
+ *  - performance tests
+ *  - sqe tests
+ *  - unit tests
+ *  - manual tests (toys)
+ *  - media tests
+ *  - native code compilation
+ *  - aria project?
+ *  - iaccessible project?
+ *  - test-stub-toolkit
+ *  - README, README.md, license file, etc.
+ *  - How to handle dt *.properties?
+ *  - cagsrc double vs cagsrc float. Do we need to have both? We never use cagsrc.float now, so only
+ *    if we intended to use it on low end systems would we bother compiling with it, not sure we care.
+ */
+
+defaultTasks = ["generate"]
+RTDir = "."
+FXDir = "../javafx"
+task generate << {
+    def excludeResources = ["META-INF/**", "**/*.properties", "**/*.stg", "**/*.g", "**/*.css", "**/*.html", "**/*.png", "**/*.jpg", "nbproject", "*.iml"]
+    def includeResources = ["META-INF/**", "**/*.properties", "**/*.stg", "**/*.css", "**/*.html", "**/*.png", "**/*.jpg"]
+
+    // Copy over the new gradle build files
+    copy {
+        from RTDir
+        into FXDir
+        include "build.gradle", "settings.gradle"
+    }
+
+    copy {
+        from "$RTDir/buildSrc"
+        into "$FXDir/buildSrc"
+    }
+
+    // Create the build-tools project
+    copy {
+        from "${RTDir}/javafx-beans/src"
+        into "${FXDir}/build-tools/src/main/java"
+        include "com/sun/javafx/beans/annotations/**",
+                "com/sun/javafx/collections/annotations/**"
+    }
+    copy {
+        from "${RTDir}/javafx-annotation-processor/src",
+             "${RTDir}/decora-compiler/src"
+        into "${FXDir}/build-tools/src/main/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-annotation-processor/src",
+             "${RTDir}/decora-compiler/src"
+        into "${FXDir}/build-tools/src/main/resources"
+        include includeResources
+    }
+    copy {
+        from "${RTDir}/decora-compiler/src/com/sun/scenario/effect/compiler/JSL.g"
+        into "${FXDir}/build-tools/src/main/antlr"
+    }
+    copy {
+        from "${RTDir}/decora-compiler/test"
+        into "${FXDir}/build-tools/src/test/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/decora-compiler/test"
+        into "${FXDir}/build-tools/src/test/resources"
+        include includeResources
+    }
+
+    // Create the base module
+    copy {
+        from "${RTDir}/javafx-beans/src",
+             "${RTDir}/javafx-util-converter/src",
+             "${RTDir}/javafx-anim/src",
+             "${RTDir}/javafx-common/src",
+             "${RTDir}/javafx-logging/src"
+        into "${FXDir}/modules/base/src/main/java"
+        exclude "com/sun/javafx/beans/annotations/**",
+                "com/sun/javafx/collections/annotations/**"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-beans/src",
+             "${RTDir}/javafx-util-converter/src",
+             "${RTDir}/javafx-anim/src",
+             "${RTDir}/javafx-common/src",
+             "${RTDir}/javafx-logging/src"
+        into "${FXDir}/modules/base/src/main/resources"
+        include includeResources
+    }
+    copy {
+        from "${RTDir}/javafx-common/build-tools"
+        into "${FXDir}/modules/base/src/main/version-info"
+    }
+    copy {
+        from "${RTDir}/javafx-beans/test",
+             "${RTDir}/javafx-util-converter/test",
+             "${RTDir}/javafx-anim/test/unit", // TODO also has functional tests
+             "${RTDir}/javafx-common/test/unit"
+        into "${FXDir}/modules/base/src/test/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-beans/test",
+             "${RTDir}/javafx-util-converter/test",
+             "${RTDir}/javafx-anim/test/unit", // TODO also has functional tests
+             "${RTDir}/javafx-common/test/unit"
+        into "${FXDir}/modules/base/src/test/resources"
+        include includeResources
+    }
+
+    // Create the graphics module
+    copy {
+        from "${RTDir}/decora-d3d/src",
+             "${RTDir}/decora-es2/src",
+             "${RTDir}/decora-jsw/src",
+             "${RTDir}/decora-prism/src",
+             "${RTDir}/decora-prism-ps/src",
+             "${RTDir}/decora-prism-sw/src",
+             "${RTDir}/decora-runtime/src",
+             "${RTDir}/decora-sse/src",
+             "${RTDir}/javafx-ui-common/src",
+             "${RTDir}/javafx-concurrent/src",
+             "${RTDir}/javafx-geom/src",
+             "${RTDir}/javafx-geom/cagsrc.double",
+             "${RTDir}/javafx-sg-common/src",
+             "${RTDir}/javafx-sg-prism/src",
+             "${RTDir}/pisces/src",
+             "${RTDir}/glass/glass/src",
+             "${RTDir}/javafx-ui-quantum/src",
+             "${RTDir}/prism-common/src",
+             "${RTDir}/prism-j2d/src",
+             "${RTDir}/prism-null/src",
+             "${RTDir}/prism-ps/src",
+             "${RTDir}/prism-sw/src",
+             "${RTDir}/prism-util/src"
+        into "${FXDir}/modules/graphics/src/main/java"
+        exclude "com/sun/scenario/effect/compiler/JSL.g",
+                "com/sun/javafx/css/parser/jfxCssLexer.g",
+                "com/sun/javafx/css/parser/jfxCssParser.g"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/decora-d3d/src",
+             "${RTDir}/decora-es2/src",
+             "${RTDir}/decora-jsw/src",
+             "${RTDir}/decora-prism/src",
+             "${RTDir}/decora-prism-ps/src",
+             "${RTDir}/decora-prism-sw/src",
+             "${RTDir}/decora-runtime/src",
+             "${RTDir}/decora-sse/src",
+             "${RTDir}/javafx-ui-common/src",
+             "${RTDir}/javafx-concurrent/src",
+             "${RTDir}/javafx-geom/src",
+             "${RTDir}/javafx-geom/cagsrc.double",
+             "${RTDir}/javafx-sg-common/src",
+             "${RTDir}/javafx-sg-prism/src",
+             "${RTDir}/pisces/src",
+             "${RTDir}/glass/glass/src",
+             "${RTDir}/javafx-ui-quantum/src",
+             "${RTDir}/prism-common/src",
+             "${RTDir}/prism-j2d/src",
+             "${RTDir}/prism-null/src",
+             "${RTDir}/prism-ps/src",
+             "${RTDir}/prism-sw/src",
+             "${RTDir}/prism-util/src"
+        into "${FXDir}/modules/graphics/src/main/resources"
+        include includeResources
+    }
+    copy {
+        from "${RTDir}/javafx-concurrent/test",
+             "${RTDir}/javafx-geom/test",
+             "${RTDir}/javafx-sg-common/test",
+             "${RTDir}/javafx-sg-prism/test"
+        into "${FXDir}/modules/graphics/src/test/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-concurrent/test",
+             "${RTDir}/javafx-geom/test",
+             "${RTDir}/javafx-sg-common/test",
+             "${RTDir}/javafx-sg-prism/test"
+        into "${FXDir}/modules/graphics/src/test/resources"
+        include includeResources
+    }
+    // Because we have tests that need to be run with StubToolkit vs. Quantum,
+    // and others that need Quantum, we have to split them apart
+    copy {
+        from "${RTDir}/javafx-ui-common/test/unit",
+             "${RTDir}/test-stub-toolkit/src"
+        into "${FXDir}/modules/graphics/src/test/testsWithStubToolkit"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-ui-common/test/unit",
+             "${RTDir}/test-stub-toolkit/src"
+        into "${FXDir}/modules/graphics/src/test/resourcesWithStubToolkit"
+        include includeResources
+    }
+
+    copy {
+        from "${RTDir}/javafx-ui-common/src/com/sun/javafx/css/parser/jfxCssLexer.g",
+             "${RTDir}/javafx-ui-common/src/com/sun/javafx/css/parser/jfxCssParser.g"
+        into "${FXDir}/modules/graphics/src/main/antlr"
+    }
+
+    copy {
+        from "${RTDir}/javafx-beans-dt/src"
+        into "${FXDir}/modules/designTime/src/main/java"
+    }
+    copy {
+        from "${RTDir}/javafx-designtime/src"
+        into "${FXDir}/modules/designTime/src/main/java"
+        include "javafx/scene/ParentDesignInfo.java", "javafx/scene/layout/**", "com/**"
+    }
+
+    copy {
+        from "${RTDir}/prism-ps/jsl",
+             "${RTDir}/prism-ps/shadergen"
+        into "${FXDir}/modules/graphics/prism-jsl/src/main/java"
+        exclude "nbproject", "*.iml", "*.stg"
+    }
+
+    copy {
+        from "${RTDir}/prism-ps/shadergen"
+        into "${FXDir}/modules/graphics/prism-jsl/src/main/resources"
+        include "*.stg"
+    }
+
+    ["decora-d3d-native", "decora-sse-native", "prism-common-native", "prism-sw-native"].each { dir ->
+        copy {
+            from "${RTDir}/${dir}"
+            into "${FXDir}/modules/graphics/native/src/main/${dir}"
+            exclude "build", "dist", "*.iml"
+        }
+    }
+
+    copy {
+        from "${RTDir}/decora-runtime/jsl",
+             "${RTDir}/decora-runtime/generator"
+        into "${FXDir}/modules/graphics/effects-jsl/src/main/java"
+    }
+
+    // Create the controls module
+    copy {
+        from "${RTDir}/javafx-ui-charts/src",
+             "${RTDir}/javafx-ui-controls/src"
+        into "${FXDir}/modules/controls/src/main/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-ui-charts/src",
+             "${RTDir}/javafx-ui-controls/src"
+        into "${FXDir}/modules/controls/src/main/resources"
+        include includeResources
+    }
+    copy {
+        from "${RTDir}/javafx-designtime/src"
+        into "${FXDir}/modules/controls/src/main/dt"
+        include "javafx/scene/control/**"
+    }
+    copy {
+        from "${RTDir}/javafx-ui-charts/test",
+             "${RTDir}/javafx-ui-controls/test"
+        into "${FXDir}/modules/controls/src/test/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-ui-charts/test",
+             "${RTDir}/javafx-ui-controls/test"
+        into "${FXDir}/modules/controls/src/test/java"
+        include includeResources
+    }
+
+    // Create the web module
+
+    // Create the swing module
+    copy {
+        from "${RTDir}/javafx-embed-swing/src"
+        into "${FXDir}/modules/swing/src/main/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-embed-swing/src"
+        into "${FXDir}/modules/swing/src/main/java"
+        include includeResources
+    }
+
+    // Create the swt module
+    copy {
+        from "${RTDir}/javafx-embed-swt/src"
+        into "${FXDir}/modules/swt/src/main/java"
+        exclude excludeResources
+    }
+    copy {
+        from "${RTDir}/javafx-embed-swt/src"
+        into "${FXDir}/modules/swt/src/main/java"
+        include includeResources
+    }
+
+    // Create the fxml module
+//    copy {
+//        from "${RTDir}/javafx-fxml/src"
+//        into "${FXDir}/modules/fxml/src/main/java"
+//        exclude excludeResources
+//    }
+//    copy {
+//        from "${RTDir}/javafx-fxml/src"
+//        into "${FXDir}/modules/fxml/src/main/resources"
+//        include includeResources
+//    }
+}

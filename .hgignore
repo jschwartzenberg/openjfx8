@@ -1,0 +1,21 @@
+\.orig$
+\.DS_Store$
+\.orig\..*$
+\.chg\..*$
+\.rej$
+\.conflict\~$
+^\.ant-targets.*$
+\.idea/workspace.xml$
+build/
+bin/
+dist/
+test.keystore
+^webrev*
+nbproject/private/
+target/
+^.*~$
+syntax: glob
+*.vcxproj.user
+*/Release/*
+*/Debug/*
+*~

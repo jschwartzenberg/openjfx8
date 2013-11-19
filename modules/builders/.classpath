@@ -1,0 +1,7 @@
+<classpath>
+  <classpathentry kind="lib" path="build/libs/builders.jar" exported="true" sourcepath="src/main/java"/>
+  <!-- Builders will never change because they are deprectated so reference the jar -->
+  <classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+  <classpathentry kind="output" path="bin"/>
+</classpath>

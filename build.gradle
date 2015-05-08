@@ -1661,6 +1661,9 @@ project(":swing") {
     dependencies {
         compile BUILD_SRC, project(":base"), project(":graphics")
     }
+    test {
+        enabled = IS_FULL_TEST && IS_AWT_TEST
+    }
 }
 
 project(":swt") {
@@ -2066,6 +2069,7 @@ project(":fxpackager") {
                 from "$projectDir/src/test/resources/hello/java-logo2.gif"
                 from "$projectDir/src/test/resources/hello/small.ico"
                 from "$projectDir/src/test/resources/hello/test.icns"
+                from "$projectDir/src/test/resources/hello/LICENSE-RTF.rtf"
                 from "$projectDir/../../LICENSE"
                 from "$projectDir/build/libs/packager.jar"
                 into project.file("$projectDir/build/tmp/tests/appResources")

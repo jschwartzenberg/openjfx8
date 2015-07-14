@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates.
  * All rights reserved. Use is subject to license terms.
  *
  * This file is available and licensed under the following license:
@@ -46,29 +46,26 @@ class JavaMethod;
 class JavaStringArray;
 
 
-class JavaException : public std::exception {
+class JavaException : public Exception {
 // Prohibit Heap-Based Classes.
 private:
     static void *operator new(size_t size);
 
 private:
 #ifdef DEBUG
-    static std::string CreateExceptionMessage(JNIEnv* Env, jthrowable Exception,
+    static TString CreateExceptionMessage(JNIEnv* Env, jthrowable Exception,
         jmethodID GetCauseMethod, jmethodID GetStackTraceMethod, jmethodID ThrowableToStringMethod,
         jmethodID FrameToStringMethod);
 #endif //DEBUG
 
-    std::string FMessage;
     jthrowable FException;
     JNIEnv *FEnv;
 
 public:
     explicit JavaException();
-    explicit JavaException(const char* const message);
-    explicit JavaException(JNIEnv *Env, const char* const message);
+    explicit JavaException(JNIEnv *Env, const TString message);
     virtual ~JavaException() throw() {}
 
-    virtual const char* what();
     void Rethrow();
 };
 
@@ -147,7 +144,7 @@ private:
 private:
     JNIEnv *FEnv;
     jobjectArray FData;
-    
+
     void Initialize(size_t Size);
 
 public:

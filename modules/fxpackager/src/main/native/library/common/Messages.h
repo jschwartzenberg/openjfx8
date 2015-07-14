@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates.
  * All rights reserved. Use is subject to license terms.
  *
  * This file is available and licensed under the following license:
@@ -49,6 +49,7 @@
 
 #define BUNDLED_JVM_NOT_FOUND _T("bundled.jvm.not.found")
 
+#define APPCDS_CACHE_FILE_NOT_FOUND _T("appcds.cache.file.not.found")
 
 class Messages {
 private:

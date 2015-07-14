@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,6 +116,7 @@ JNIEXPORT void JNICALL Java_com_sun_glass_ui_gtk_GtkApplication__1runLoop
   (JNIEnv * env, jobject obj, jobject launchable, jboolean noErrorTrap)
 {
     (void)obj;
+    (void)noErrorTrap;
 
     env->CallVoidMethod(launchable, jRunnableRun);
     CHECK_JNI_EXCEPTION(env);

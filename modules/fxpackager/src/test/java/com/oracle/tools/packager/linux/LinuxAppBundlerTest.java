@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -219,6 +219,7 @@ public class LinuxAppBundlerTest {
             assertNotNull(p.getProperty("app.preferences.id"));
             assertNotNull(p.getProperty("app.mainclass"));
             assertNotNull(p.getProperty("app.classpath"));
+            assertNotNull(p.getProperty("app.identifier"));
 
             // - make sure 'app.classpath=null' doesn't show up, prefer 'app.classpath='
             assertFalse(p.getProperty("app.classpath").equals("null"));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,22 +25,15 @@
 
 package javafx.scene.chart;
 
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import javafx.collections.*;
-
-
-import javafx.scene.Node;
+import com.sun.javafx.scene.control.infrastructure.ControlTestUtils;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Group;
-import javafx.scene.shape.*;
-import static org.junit.Assert.assertTrue;
-
+import javafx.scene.Node;
+import javafx.scene.shape.Path;
+import static org.junit.Assert.assertEquals;
 import org.junit.Ignore;
-
+import org.junit.Test;
 
 public class AreaChartTest extends XYChartTestBase {
     AreaChart<Number,Number> ac;
@@ -94,20 +87,7 @@ public class AreaChartTest extends XYChartTestBase {
         }
         return sb;
     }
-    
-    @Test
-    public void testSeriesRemove() {
-        startApp();
-        ac.getData().addAll(series1);
-        pulse();
-        if (!ac.getData().isEmpty()) {
-            ac.getData().remove(0);
-            pulse();
-            StringBuffer sb = getSeriesLineFromPlot();
-            assertEquals(sb.toString(), "");
-        }
-    }
-    
+
     @Test @Ignore
     public void testDataItemRemove() {
         startApp();
@@ -127,7 +107,7 @@ public class AreaChartTest extends XYChartTestBase {
         startApp();
         useCategoryAxis = false;
     }
-    
+
     @Test public void testCreateSymbols() {
          startApp();
          ac.getData().clear();
@@ -144,36 +124,4 @@ public class AreaChartTest extends XYChartTestBase {
          pulse();
          assertEquals(5, countSymbols(ac, "chart-area-symbol"));
      }
-
-    boolean writeWasCalled = false;
-    @Test
-    public void testDataWithoutSymbolsAddWithAnimation_rt_39353() {
-        startApp();
-        ac.setAnimated(true);
-        ac.setCreateSymbols(false);
-        ac.getData().addAll(series1);
-        series1.getData().add(new XYChart.Data(40d,10d));
-        final PrintStream defaultErrorStream = System.err;
-        final PrintStream errChecker = new PrintStream(new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                writeWasCalled = true;
-            }
-        });
-        try {
-            System.setErr(errChecker);
-        } catch (SecurityException ex) {
-            // ignore
-        }
-        toolkit.setAnimationTime(0);
-        // check remove just in case
-        series1.getData().remove(0);
-        toolkit.setAnimationTime(800);
-        try {
-            System.setErr(defaultErrorStream);
-        } catch (SecurityException ex) {
-            // ignore
-        }
-        assertTrue(!writeWasCalled);
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,13 @@ package com.sun.javafx.scene.web.skin;
 import java.util.ResourceBundle;
 
 import com.sun.javafx.application.PlatformImpl;
+import com.sun.javafx.scene.traversal.Algorithm;
+import com.sun.javafx.scene.traversal.Direction;
+import com.sun.javafx.scene.traversal.ParentTraversalEngine;
+import com.sun.javafx.scene.traversal.TraversalContext;
+import javafx.geometry.Orientation;
+import org.w3c.dom.html.HTMLDocument;
+import org.w3c.dom.html.HTMLElement;
 
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
@@ -232,7 +239,7 @@ public class HTMLEditorSkin extends BehaviorSkinBase<HTMLEditor, HTMLEditorBehav
         return DEFAULT_WINDOWS_7_MAPPINGS;
     }
 
-    private TraversalEngine engine;
+    private ParentTraversalEngine engine;
 
     private boolean resetToolbarState = false;
     private String cachedHTMLText = "<html><body></body></html>";
@@ -474,9 +481,22 @@ public class HTMLEditorSkin extends BehaviorSkinBase<HTMLEditor, HTMLEditorBehav
         enableToolbar(true);
         setHTMLText(cachedHTMLText);
 
-        engine = new TraversalEngine(getSkinnable(), false);
-        engine.addTraverseListener(this);
-        engine.reg(toolbar1);
+        engine = new ParentTraversalEngine(getSkinnable(), new Algorithm() {
+            @Override
+            public Node select(Node owner, Direction dir, TraversalContext context) {
+                return cutButton;
+            }
+
+            @Override
+            public Node selectFirst(TraversalContext context) {
+                return cutButton;
+            }
+
+            @Override
+            public Node selectLast(TraversalContext context) {
+                return cutButton;
+            }
+        });
         getSkinnable().setImpl_traversalEngine(engine);
         webView.setFocusTraversable(true);
         gridPane.getChildren().addListener(itemsListener);

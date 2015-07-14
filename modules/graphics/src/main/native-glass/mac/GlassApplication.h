@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,11 @@
     jobject         jLaunchable;
     jboolean        jTaskBarApp;
     jlong           jshareContextPtr;
+
+    // local and intra-app event monitoring
+    //
+    // id              localMonitor;
+    // id              globalMonitor;
 }
 
 - (void)runLoop:(id)selector;

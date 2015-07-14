@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,6 +127,11 @@ public class J2DPrinterJob implements PrinterJobImpl {
         if (!Toolkit.getToolkit().isFxUserThread()) {
             rv = pJob2D.printDialog(printReqAttrSet);
         } else {
+            // If we are on the event thread, we need to check whether we are
+            // allowed to call a nested event handler.
+            if (!Toolkit.getToolkit().canStartNestedEventLoop()) {
+                throw new IllegalStateException("Printing is not allowed during animation or layout processing");
+            }
             rv = showPrintDialogWithNestedLoop(owner);
         }
         if (rv) {
@@ -176,6 +181,11 @@ public class J2DPrinterJob implements PrinterJobImpl {
             PageFormat pf = pJob2D.pageDialog(printReqAttrSet);
             rv = pf != null;
         } else {
+            // If we are on the event thread, we need to check whether we are
+            // allowed to call a nested event handler.
+            if (!Toolkit.getToolkit().canStartNestedEventLoop()) {
+                throw new IllegalStateException("Printing is not allowed during animation or layout processing");
+            }
             rv = showPageDialogFromNestedLoop(owner);
         }
         if (rv) {
@@ -698,6 +708,13 @@ public class J2DPrinterJob implements PrinterJobImpl {
      * and the PG code can only access it during sync.
      */
     public boolean print(PageLayout pageLayout, Node node) {
+        if (Toolkit.getToolkit().isFxUserThread()) {
+            // If we are on the event thread, we need to check whether we are
+            // allowed to call a nested event handler.
+            if (!Toolkit.getToolkit().canStartNestedEventLoop()) {
+                throw new IllegalStateException("Printing is not allowed during animation or layout processing");
+            }
+        }
 
         if (jobError || jobDone) {
             return false;

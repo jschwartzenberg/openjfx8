@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1152,9 +1152,9 @@ gsize dshowwrapper_get_avc_config(void *in, gsize in_size, BYTE *out, gsize out_
 
     bdata += sizeof(AVCCHeader); // length of first SPS struct, if any
     in_bytes_count += sizeof(AVCCHeader);
-    
+
     for (ii = 0; ii < header->spsCount; ii++) {
-        
+
         if ((in_bytes_count + 2) > in_size)
             return 0;
 
@@ -1162,7 +1162,7 @@ gsize dshowwrapper_get_avc_config(void *in, gsize in_size, BYTE *out, gsize out_
         bdata++;
         structSize |= (guint16)*(guint8*)bdata;
         bdata++;
-        
+
         out_bytes_count += (structSize + 2);
         if (out_bytes_count > out_size)
             return 0;
@@ -1186,7 +1186,7 @@ gsize dshowwrapper_get_avc_config(void *in, gsize in_size, BYTE *out, gsize out_
     in_bytes_count += 1;
 
     for (ii = 0; ii < ppsCount; ii++) {
-        
+
         if ((in_bytes_count + 2) > in_size)
             return 0;
 
@@ -1441,7 +1441,7 @@ static gboolean dshowwrapper_load_decoder_aac(GstStructure *s, GstDShowWrapper *
 
     if (decoder->pDecoder == NULL)
         return FALSE;
-        
+
     // Init input
     sInputFormat inputFormat;
     ZeroMemory(&inputFormat, sizeof(sInputFormat));
@@ -2632,7 +2632,7 @@ static GstStateChangeReturn dshowwrapper_change_state (GstElement* element, GstS
 
     switch(transition)
     {
-    case GST_STATE_CHANGE_READY_TO_NULL:        
+    case GST_STATE_CHANGE_READY_TO_NULL:
         dshowwrapper_destroy_graph(decoder);
         break;
     default:

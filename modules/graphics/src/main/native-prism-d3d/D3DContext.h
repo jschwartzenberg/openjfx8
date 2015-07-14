@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -142,8 +142,6 @@ public:
 
     D3DMATRIX *GetWorldTx() { return &world; }
 
-    D3DVECTOR *GetCamPos() { return &camPos; }
-
     D3DPOOL getResourcePool() { return defaulResourcePool; }
 
     HRESULT SetRenderTarget(IDirect3DSurface9 *pSurface, IDirect3DSurface9 **ppTargetDepthSurface, BOOL depthBuffer, BOOL msaa);
@@ -252,8 +250,7 @@ private:
 
     D3DMATRIX world; // node local to world transform
     D3DMATRIX projection; // projection view transform (TODO: This should now include the camera's world to local tx?)
-    D3DVECTOR camPos; // camera position in world coord.
-
+    BOOL depthTest;
     float pixadjustx, pixadjusty;
 
     // finds appropriate to the target surface depth format,

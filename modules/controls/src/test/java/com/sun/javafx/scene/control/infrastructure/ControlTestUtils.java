@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -230,5 +230,54 @@ public final class ControlTestUtils {
         results.addAll(ExpressionHelperUtility.getChangeListeners(value));
         results.addAll(ExpressionHelperUtility.getInvalidationListeners(value));
         return results;
+    }
+
+    // methods for temporary setting UncaughtExceptionHandler
+    public static ExceptionHandler setHandler() {
+        return new ExceptionHandler();
+    }
+
+    public static class ExceptionHandler implements Thread.UncaughtExceptionHandler {
+        private Throwable cause = null;
+        private Thread.UncaughtExceptionHandler oldHandler;
+
+        public ExceptionHandler() {
+            this.oldHandler = Thread.currentThread().getUncaughtExceptionHandler();
+            Thread.currentThread().setUncaughtExceptionHandler(this);
+        }
+
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            e.printStackTrace();
+            cause = e;
+        }
+
+        public void checkException() {
+            if (cause != null) {
+                if (cause instanceof Error) {
+                    throw (Error) cause;
+                } else if (cause instanceof RuntimeException) {
+                    throw (RuntimeException) cause;
+                } else {
+                    throw new AssertionError(cause);
+                }
+            }
+        }
+
+        // the test should call this method in the finally block to ensure
+        // that the handler is reset
+        public void resetHandler() {
+            Thread.currentThread().setUncaughtExceptionHandler(oldHandler);
+        }
+    }
+
+    public static void runWithExceptionHandler(Runnable r) {
+        ExceptionHandler myHandler = new ExceptionHandler();
+        try {
+            r.run();
+        } finally {
+            myHandler.resetHandler();
+        }
+        myHandler.checkException();
     }
 }

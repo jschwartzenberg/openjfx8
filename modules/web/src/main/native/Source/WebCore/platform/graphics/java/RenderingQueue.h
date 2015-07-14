@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 #ifndef RenderingQueue_h
 #define RenderingQueue_h
@@ -127,6 +127,7 @@ namespace WebCore {
         }
 
         ~RenderingQueue() {
+            disposeGraphics();
         }
 
     private:
@@ -138,6 +139,7 @@ namespace WebCore {
         {}
 
         void flush();
+        void disposeGraphics();
 
         int m_capacity;
         bool m_autoFlush;

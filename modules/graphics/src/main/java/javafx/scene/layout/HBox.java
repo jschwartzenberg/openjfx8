@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -335,7 +335,7 @@ public class HBox extends Pane {
 
     /**
      * Whether or not resizable children will be resized to fill the full height of the hbox
-     * or be kept to their preferred height and aligned according to the <code>alignment</code>
+     * or be resized to their preferred height and aligned according to the <code>alignment</code>
      * vpos value.   Note that if the hbox vertical alignment is set to BASELINE, then this
      * property will be ignored and children will be resized to their preferred heights.
      */
@@ -371,7 +371,7 @@ public class HBox extends Pane {
     public final boolean isFillHeight() { return fillHeight == null ? true : fillHeight.get(); }
 
     private boolean shouldFillHeight() {
-        return isFillHeight();
+        return isFillHeight() && getAlignmentInternal().getVpos() != VPos.BASELINE;
     }
 
     /**

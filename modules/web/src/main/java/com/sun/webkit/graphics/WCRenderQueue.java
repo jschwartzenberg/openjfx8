@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ public abstract class WCRenderQueue extends Ref {
     private final boolean opaque;
 
     // Associated graphics context (currently used to draw to a buffered image).
-    private final WCGraphicsContext gc;
+    protected final WCGraphicsContext gc;
 
     protected WCRenderQueue(WCGraphicsContext gc) {
         this.clip = null;
@@ -141,6 +141,12 @@ public abstract class WCRenderQueue extends Ref {
                         new Object[]{hashCode(), idCountObj.decrementAndGet()});
             }
         }
+    }
+    
+    protected abstract void disposeGraphics();
+    
+    private void fwkDisposeGraphics() {
+        disposeGraphics();
     }
 
     private native void twkRelease(Object[] bufs);

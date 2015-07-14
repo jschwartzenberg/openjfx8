@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 #include "config.h"
 
@@ -34,10 +34,10 @@ static JLString getJavaString(const TextRun& run)
     return ret.toJavaString(WebCore_GetJavaEnv());
 }
 
-void Font::drawComplexText(GraphicsContext* gc, const TextRun & run, const FloatPoint & point, int from, int to) const
+float Font::drawComplexText(GraphicsContext* gc, const TextRun & run, const FloatPoint & point, int from, int to) const
 {
     if (!gc) {
-        return;
+        return 0;
     }
 
     JNIEnv* env = WebCore_GetJavaEnv();
@@ -64,6 +64,8 @@ void Font::drawComplexText(GraphicsContext* gc, const TextRun & run, const Float
         << (jint)to
         << (jfloat)point.x()
         << (jfloat)point.y();
+
+    return 0; // tav todo
 }
 
 float Font::floatWidthForComplexText(const TextRun& run, HashSet<const SimpleFontData*>* fallbackFonts, GlyphOverflow* /* glyphOverflow */) const
@@ -95,6 +97,15 @@ FloatRect Font::selectionRectForComplexText(const TextRun& run,
     if (!jFont)
         return FloatRect();
 
+    // adjusting to/from bounds due to issue RT-46101
+    if (from > run.length()) {
+        return FloatRect();
+    }
+
+    if (to > run.length()) {
+        to = run.length();
+    }
+
     JNIEnv* env = WebCore_GetJavaEnv();
     static jmethodID getStringBounds_mID = env->GetMethodID(
         PG_GetFontClass(env),
@@ -109,7 +120,10 @@ FloatRect Font::selectionRectForComplexText(const TextRun& run,
         jint(from),
         jint(to),
         jboolean(run.rtl()))));
-    CheckAndClearException(env);
+
+    if (CheckAndClearException(env)) {
+        return FloatRect();
+    }
 
     jdouble* pBnds = (jdouble*)env->GetPrimitiveArrayCritical((jdoubleArray)bnds, NULL);
     FloatRect r(pBnds[0] + point.x(), point.y(), pBnds[2], h);

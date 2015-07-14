@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -636,8 +636,8 @@ public abstract class Application {
         for (Screen s : Screen.getScreens()) {
             final int sx = s.getX(), sy = s.getY(), sw = s.getWidth(), sh = s.getHeight();
             if (x < (sx + sw) && (x + w) > sx && y < (sy + sh) && (y + h) > sy) {
-                if (scale < s.getScale()) {
-                    scale = s.getScale();
+                if (scale < s.getRenderScale()) {
+                    scale = s.getRenderScale();
                 }
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 #include "config.h"
 
@@ -26,7 +26,7 @@ bool FrameData::clear(bool clearMetadata)
 
     if (m_frame) {
 #if USE(IMAGEIO)
-        JNIEnv* env = WebCore_GetJavaEnv();
+	WC_GETJAVAENV_CHKRET(env, false);
         static jmethodID midDestroyDecodedData = env->GetMethodID(
                 JLClass(env->GetObjectClass(*m_frame)),
                 "destroyDecodedData",
@@ -52,7 +52,7 @@ void BitmapImage::checkForSolidColor()
 }
 
 void BitmapImage::draw(GraphicsContext *gc, const FloatRect &dstRect, const FloatRect &srcRect,
-                       ColorSpace cs, CompositeOperator co, BlendMode bm)
+                       ColorSpace cs, CompositeOperator co, BlendMode bm, ImageOrientationDescription id) // todo tav new param
 {
     Image::drawImage(gc, dstRect, srcRect, cs, co, bm);
     startAnimation();
@@ -60,10 +60,8 @@ void BitmapImage::draw(GraphicsContext *gc, const FloatRect &dstRect, const Floa
 
 PassRefPtr<Image> BitmapImage::createFromName(const char* name)
 {
-    JNIEnv* env = WebCore_GetJavaEnv();
-    if (!env)
-        return NULL;
-
+    WC_GETJAVAENV_CHKRET(env, NULL);
+    
     RefPtr<BitmapImage> img(create());
 
 #if USE(IMAGEIO)

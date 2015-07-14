@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -327,7 +327,9 @@ public class JarSignature {
     }
 
     public CodeSigner[] getCodeSigners() {
-        return codeSigners;
+        CodeSigner[] result = new CodeSigner[codeSigners.length];
+        System.arraycopy(codeSigners, 0, result, 0, result.length);
+        return result;
     }
 
     /*

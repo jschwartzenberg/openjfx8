@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,6 +121,9 @@ public final class WebPage {
     // The current frame being generated.
     // Accessed on: Event thread only.
     private RenderFrame currentFrame = new RenderFrame();
+    
+    // An ID of the current updateContent cycle associated with an updateContent call.
+    private int updateContentCycleID;
 
     static {
         AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
@@ -207,6 +210,9 @@ public final class WebPage {
     private List<WCRectangle> dirtyRects = new LinkedList<WCRectangle>();
 
     private void addDirtyRect(WCRectangle toPaint) {
+        if (toPaint.getWidth() <= 0 || toPaint.getHeight() <= 0) {
+            return;
+        }
         for (Iterator<WCRectangle> it = dirtyRects.iterator(); it.hasNext();) {
             WCRectangle rect = it.next();
             // if already covered
@@ -371,11 +377,11 @@ public final class WebPage {
             }
         }
 
-        // Add the dirty (not copied) rect
-        addDirtyRect(new WCRectangle(dx >= 0 ? x : x + w + dx,
-                                     dy >= 0 ? y : y + h + dy,
-                                     dx == 0 ? w : Math.abs(dx),
-                                     dy == 0 ? h : Math.abs(dy)));
+        // Add the dirty (not copied) rects
+        addDirtyRect(new WCRectangle(x, dy >= 0 ? y : y + h + dy,
+                                     w, Math.abs(dy)));
+        addDirtyRect(new WCRectangle(dx >= 0 ? x : x + w + dx, y,
+                                     Math.abs(dx), h - Math.abs(dy)));
     }
 
     // Instances of this class may not be accessed and modified concurrently
@@ -581,6 +587,8 @@ public final class WebPage {
     public void updateContent(WCRectangle toPaint) {
         lockPage();
         try {
+            ++updateContentCycleID;
+            
             paintLog.log(Level.FINEST, "toPaint: {0}", toPaint);
             if (isDisposed) {
                 paintLog.fine("updateContent() request for a disposed web page.");
@@ -591,6 +599,10 @@ public final class WebPage {
         } finally {
             unlockPage();
         }
+    }
+    
+    public int getUpdateContentCycleID() {
+        return updateContentCycleID;
     }
 
     public boolean isRepaintPending() {

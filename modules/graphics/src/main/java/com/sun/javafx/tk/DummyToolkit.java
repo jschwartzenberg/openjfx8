@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,6 +79,11 @@ final public class DummyToolkit extends Toolkit {
     @Override
     public boolean init() {
         return true;
+    }
+
+    @Override
+    public boolean canStartNestedEventLoop() {
+        return false;
     }
 
     @Override
@@ -328,6 +333,11 @@ final public class DummyToolkit extends Toolkit {
 
     @Override
     public List<?> getScreens() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public ScreenConfigurationAccessor getScreenConfigurationAccessor() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

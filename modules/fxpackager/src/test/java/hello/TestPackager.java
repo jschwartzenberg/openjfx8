@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -172,6 +172,11 @@ public class TestPackager {
         TestPackager.args = args;
         //Schedule a job for the event-dispatching thread:
         //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(TestPackager::createAndShowGUI);
+		try {
+			javax.swing.SwingUtilities.invokeAndWait(TestPackager::createAndShowGUI);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 }

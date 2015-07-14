@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,9 +97,12 @@ import javafx.beans.value.ObservableValue;
  * <p>
  * A stage can optionally have an owner Window.
  * When a window is a stage's owner, it is said to be the parent of that stage.
- * When a parent window is closed, all its descendant windows are closed. 
- * The same chained behavior applied for a parent window that is iconified. 
- * A stage will always be on top of its parent window.
+ * <p>
+ * Owned Stages are tied to the parent Window.
+ * An owned stage will always be on top of its parent window.
+ * When a parent window is closed or iconified, then all owned windows will be affected as well.
+ * Owned Stages cannot be independantly iconified.
+ * <p>
  * The owner must be initialized before the stage is made visible.
  *
  * <p><b>Modality</b></p>
@@ -430,12 +433,16 @@ public class Stage extends Window {
      * <p>
      * This method must not be called on the primary stage or on a stage that
      * is already visible.
+     * Additionally, it must either be called from an input event handler or
+     * from the run method of a Runnable passed to
+     * {@link javafx.application.Platform#runLater Platform.runLater}.
+     * It must not be called during animation or layout processing.
      * </p>
      *
      * @throws IllegalStateException if this method is called on a thread
      *     other than the JavaFX Application Thread.
-     * @throws java.lang.IllegalStateException if this method is called outside of
-     *     event handler. This includes animation callbacks, properties handlers and layout processing.
+     * @throws IllegalStateException if this method is called during
+     *     animation or layout processing.
      * @throws IllegalStateException if this method is called on the
      *     primary stage.
      * @throws IllegalStateException if this stage is already showing.
@@ -451,6 +458,10 @@ public class Stage extends Window {
 
         if (isShowing()) {
             throw new IllegalStateException("Stage already visible");
+        }
+
+        if (!Toolkit.getToolkit().canStartNestedEventLoop()) {
+            throw new IllegalStateException("showAndWait is not allowed during animation or layout processing");
         }
 
         // TODO: file a new bug; the following assertion can fail if this

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.sun.javafx.geom.Point2D;
 import com.sun.javafx.geom.Rectangle;
 import com.sun.javafx.iio.ImageFrame;
 import com.sun.javafx.iio.ImageMetadata;
+import com.sun.javafx.iio.ImageStorage;
 import com.sun.javafx.iio.ImageStorage.ImageType;
 import java.io.EOFException;
 import java.io.File;
@@ -252,7 +253,8 @@ public class ImageTools {
             ImageMetadata imd = new ImageMetadata(metadata.gamma,
                     metadata.blackIsZero, null,
                     metadata.backgroundColor, null,
-                    metadata.delayTime, metadata.imageWidth, metadata.imageHeight,
+                    metadata.delayTime, metadata.loopCount,
+                    metadata.imageWidth, metadata.imageHeight,
                     metadata.imageLeftPosition, metadata.imageTopPosition,
                     metadata.disposalMethod);
             retFrame = new ImageFrame(convertedType, newBuf, width, height,
@@ -691,6 +693,42 @@ public class ImageTools {
 
         return new int[]{finalWidth, finalHeight};
     }
+    
+    public static ImageFrame scaleImageFrame(ImageFrame src,
+            int destWidth, int destHeight, boolean isSmooth)
+    {
+        int numBands = ImageStorage.getNumBands(src.getImageType());
+        ByteBuffer dst = scaleImage((ByteBuffer) src.getImageData(),
+                src.getWidth(), src.getHeight(), numBands,
+                destWidth, destHeight, isSmooth);
+        return new ImageFrame(src.getImageType(), dst,
+                destWidth, destHeight, destWidth * numBands, null, src.getMetadata());
+    }
+
+    public static ByteBuffer scaleImage(ByteBuffer src,
+            int sourceWidth, int sourceHeight, int numBands,
+            int destWidth, int destHeight, boolean isSmooth)
+    {
+        PushbroomScaler scaler = ScalerFactory.createScaler(
+                sourceWidth, sourceHeight, numBands,
+                destWidth, destHeight, isSmooth);
+
+        int stride = sourceWidth * numBands;
+        if (src.hasArray()) {
+            byte image[] = src.array();
+            for (int y = 0; y != sourceHeight; ++y) {
+                scaler.putSourceScanline(image, y * stride);
+            }
+        } else {
+            byte scanline[] = new byte[stride];
+            for (int y = 0; y != sourceHeight; ++y) {
+                src.get(scanline);
+                scaler.putSourceScanline(scanline, 0);
+            }
+        }
+
+        return scaler.getDestination();
+    }    
 //    public static final java.awt.image.BufferedImage getAsBufferedImage(Image prismImage) {
 //        java.awt.image.BufferedImage image = null;
 //

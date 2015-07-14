@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,13 @@
 
 #include <jni.h>
 
+#ifdef  __LP64__
+#define jlong_to_ptr(a) ((void*)(a))
+#define ptr_to_jlong(a) ((jlong)(a))
+#else
 #define jlong_to_ptr(a) ((void*)(int)(a))
 #define ptr_to_jlong(a) ((jlong)(int)(a))
+#endif
 
 @interface WebViewImpl : NSObject<UIWebViewDelegate> {
     UIWebView *webView;

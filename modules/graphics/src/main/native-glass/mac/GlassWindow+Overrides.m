@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,11 +45,12 @@
 
 - (void)dealloc
 {
-    GET_MAIN_JENV;
+    assert(pthread_main_np() == 1);
+    JNIEnv *env = jEnv;
     if (env != NULL)
     {
-            (*env)->DeleteGlobalRef(env, self->jWindow);
-            GLASS_CHECK_EXCEPTION(env);
+        (*env)->DeleteGlobalRef(env, self->jWindow);
+        GLASS_CHECK_EXCEPTION(env);
     }
     
     self->jWindow = NULL;
@@ -113,8 +114,11 @@
     }
     
     // Call the notification method
-    GET_MAIN_JENV;
-    (*env)->CallVoidMethod(env, self->jWindow, jWindowNotifyDestroy);
+    assert(pthread_main_np() == 1);
+    JNIEnv *env = jEnv;
+    if (env != NULL) {
+        (*env)->CallVoidMethod(env, self->jWindow, jWindowNotifyDestroy);
+    }
 }
 
 - (void)windowWillMove:(NSNotification *)notification

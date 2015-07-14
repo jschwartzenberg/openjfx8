@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,9 +113,9 @@ import java.util.Set;
 
 import com.sun.glass.ui.Accessible;
 import com.sun.glass.ui.Application;
-import com.sun.javafx.Logging;
-import com.sun.javafx.TempState;
-import com.sun.javafx.Utils;
+import com.sun.javafx.util.Logging;
+import com.sun.javafx.util.TempState;
+import com.sun.javafx.util.Utils;
 import com.sun.javafx.beans.IDProperty;
 import com.sun.javafx.beans.event.AbstractNotifyListener;
 import com.sun.javafx.binding.ExpressionHelper;
@@ -518,6 +518,8 @@ public abstract class Node implements EventTarget, Styleable {
     private BaseBounds _geomBounds = new RectBounds(0, 0, -1, -1);
     private BaseBounds _txBounds = new RectBounds(0, 0, -1, -1);
 
+    private boolean pendingUpdateBounds = false;
+
     // Happens before we hold the sync lock
     void updateBounds() {
         // Note: the clip must be handled before the visibility is checked. This is because the visiblity might be
@@ -529,8 +531,27 @@ public abstract class Node implements EventTarget, Styleable {
 
         // See impl_syncPeer()
         if (!treeVisible && !impl_isDirty(DirtyBits.NODE_VISIBLE)) {
+
+            // Need to save the dirty bits since they will be cleared even for the
+            // case of short circuiting dirty bit processing.
+            if (impl_isDirty(DirtyBits.NODE_TRANSFORM)
+                    || impl_isDirty(DirtyBits.NODE_TRANSFORMED_BOUNDS)
+                    || impl_isDirty(DirtyBits.NODE_BOUNDS)) {
+                pendingUpdateBounds = true;
+            }
+
             return;
         }
+
+        // Set transform and bounds dirty bits when this node becomes visible
+        if (pendingUpdateBounds) {
+            impl_markDirty(DirtyBits.NODE_TRANSFORM);
+            impl_markDirty(DirtyBits.NODE_TRANSFORMED_BOUNDS);
+            impl_markDirty(DirtyBits.NODE_BOUNDS);
+
+            pendingUpdateBounds = false;
+        }
+
         if (impl_isDirty(DirtyBits.NODE_TRANSFORM) || impl_isDirty(DirtyBits.NODE_TRANSFORMED_BOUNDS)) {
             if (impl_isDirty(DirtyBits.NODE_TRANSFORM)) {
                 updateLocalToParentTransform();

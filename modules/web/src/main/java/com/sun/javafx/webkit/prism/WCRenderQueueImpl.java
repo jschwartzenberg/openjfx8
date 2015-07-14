@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,11 +39,21 @@ final class WCRenderQueueImpl extends WCRenderQueue {
         super(clip, opaque);
     }
 
-    @Override protected void flush() {
+    @Override
+    protected void flush() {
         if (!isEmpty()) {
             PrismInvoker.invokeOnRenderThread(() -> {
                 decode();
             });
         }
+    }
+    
+    @Override
+    protected void disposeGraphics() {
+        PrismInvoker.invokeOnRenderThread(() -> {
+            if (gc != null) {                
+                gc.dispose();
+            }
+        });
     }
 }

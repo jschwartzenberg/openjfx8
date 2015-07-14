@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.sun.javafx.TempState;
-import com.sun.javafx.Utils;
+import com.sun.javafx.util.TempState;
+import com.sun.javafx.util.Utils;
 import com.sun.javafx.collections.TrackableObservableList;
 import com.sun.javafx.collections.VetoableListDecorator;
 import com.sun.javafx.collections.annotations.ReturnsUnmodifiableCollection;
@@ -352,6 +352,9 @@ public abstract class Parent extends Node {
             }
 
             impl_markDirty(DirtyBits.PARENT_CHILDREN);
+            // Force synchronization to include the handling of invisible node
+            // so that removed list will get cleanup to prevent memory leak.
+            impl_markDirty(DirtyBits.NODE_FORCE_SYNC);
         }
 
     }) {
@@ -1807,5 +1810,11 @@ public abstract class Parent extends Node {
         }
         super.releaseAccessible();
     }
-
+       
+    /**
+     * Note: The only user of this method is in unit test: Parent_structure_sync_Test.
+     */
+    List<Node> test_getRemoved() {
+        return removed;
+    }
 }

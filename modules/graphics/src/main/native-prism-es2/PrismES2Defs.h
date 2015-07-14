@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,7 @@
 
 #ifdef IS_EGL
 #include <EGL/egl.h>
-#include "eglfb/wrapped_egl.h"
+#include "eglWrapper/eglWrapper.h"
 #endif
 
 #endif /* SOLARIS || LINUX */
@@ -75,6 +75,7 @@
 #if TARGET_OS_IPHONE /* iOS */
 #include <GL/gl.h>
 #include <GL/glext.h>
+#include "ios/ios-window-system.h"
 #define IS_EGL
 
 #elif TARGET_OS_MAC /* MacOSX */

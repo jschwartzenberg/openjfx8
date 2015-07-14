@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates.
  * All rights reserved. Use is subject to license terms.
  *
  * This file is available and licensed under the following license:
@@ -66,5 +66,7 @@ public:
     bool StartJVM();
     void ShutdownJVM();
 };
+
+bool RunVM();
 
 #endif //JAVAVIRTUALMACHINE_H

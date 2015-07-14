@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public abstract class AbstractBundler implements Bundler {
 
@@ -55,23 +54,6 @@ public abstract class AbstractBundler implements Bundler {
 
     protected Class baseResourceLoader = null;
     
-    //helper method to test if required files are present in the runtime
-    public void testRuntime(RelativeFileSet runtime, String[] file) throws ConfigException {
-        if (runtime == null) {
-            return; //null runtime is ok (request to use system)
-        }
-
-        Pattern[] weave = Arrays.stream(file).map(Pattern::compile).toArray(Pattern[]::new);
-
-        if (!runtime.getIncludedFiles().stream().anyMatch(s ->
-                Arrays.stream(weave).anyMatch(pattern -> pattern.matcher(s).matches())
-        )) {
-            throw new ConfigException(
-                    MessageFormat.format(I18N.getString("error.jre-missing-file"), Arrays.toString(file)),
-                    I18N.getString("error.jre-missing-file.advice"));
-        }
-    }
-
     protected void fetchResource(
             String publicName, String category,
             String defaultName, File result, boolean verbose, File publicRoot)

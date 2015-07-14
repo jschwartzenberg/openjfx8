@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,8 @@
 
 #include "PrismES2Defs.h"
 #include "com_sun_prism_es2_IOSGLContext.h"
+
+extern void printAndReleaseResources(jlong pf, jlong ctx, const char *message);
 
 /*
  * Class:     com_sun_prism_es2_IOSGLContext

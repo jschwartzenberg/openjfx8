@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -235,21 +235,24 @@ public class StackedAreaChart<X,Y> extends XYChart<X,Y> {
 
     @Override protected  void dataItemRemoved(final Data<X,Y> item, final Series<X,Y> series) {
         final Node symbol = item.getNode();
+
+        if (symbol != null) {
+            symbol.focusTraversableProperty().unbind();
+        }
+
         // remove item from sorted list
         int itemIndex = series.getItemIndex(item);
         if (shouldAnimate()) {
             boolean animate = false;
-            if (itemIndex > 0 && itemIndex < series.getDataSize()) {
+            // dataSize represents size of currently visible data. After this operation, the number will decrement by 1
+            final int dataSize = series.getDataSize();
+            // This is the size of current data list in Series. Note that it might be totaly different from dataSize as
+            // some big operation might have happened on the list.
+            final int dataListSize = series.getData().size();
+            if (itemIndex > 0 && itemIndex < dataSize - 1) {
                 animate = true;
-                int index=0;
-
                 Data<X,Y> p1 = series.getItem(itemIndex - 1);
                 Data<X,Y> p2 = series.getItem(itemIndex + 1);
-
-                if (p2 == null) {
-                    return;
-                }
-
                 double x1 = getXAxis().toNumericValue(p1.getXValue());
                 double y1 = getYAxis().toNumericValue(p1.getYValue());
                 double x3 = getXAxis().toNumericValue(p2.getXValue());
@@ -269,16 +272,16 @@ public class StackedAreaChart<X,Y> extends XYChart<X,Y> {
 //                double y = (y3 + y1)/2;
 //                item.setCurrentX(x);
 //                item.setCurrentY(y);
-            } else if (itemIndex == 0 && series.getDataSize() > 1) {
+            } else if (itemIndex == 0 && dataListSize > 1) {
                 animate = true;
                 item.setXValue(series.getData().get(0).getXValue());
                 item.setYValue(series.getData().get(0).getYValue());
-            } else if (itemIndex == (series.getDataSize() - 1) && series.getDataSize() > 1) {
+            } else if (itemIndex == (dataSize - 1) && dataListSize > 1) {
                 animate = true;
-                int last = series.getData().size() - 1;
+                int last = dataListSize - 1;
                 item.setXValue(series.getData().get(last).getXValue());
                 item.setYValue(series.getData().get(last).getYValue());
-            } else {
+            } else if (symbol != null) {
                 // fade out symbol
                 symbol.setOpacity(0);
                 FadeTransition ft = new FadeTransition(Duration.millis(500),symbol);
@@ -384,37 +387,8 @@ public class StackedAreaChart<X,Y> extends XYChart<X,Y> {
         seriesYMultiplierMap.remove(series);
         // remove all symbol nodes
         if (shouldAnimate()) {
-            // create list of all nodes we need to fade out
-            final List<Node> nodes = new ArrayList<Node>();
-            nodes.add(series.getNode());
-            for (Data<X,Y> d: series.getData()) nodes.add(d.getNode());
-            // fade out old and symbols
-            if (getCreateSymbols()) {
-                KeyValue[] startValues = new KeyValue[nodes.size()];
-                KeyValue[] endValues = new KeyValue[nodes.size()];
-                for (int j=0; j < nodes.size(); j++) {
-                    startValues[j]   = new KeyValue(nodes.get(j).opacityProperty(),1);
-                    endValues[j]       = new KeyValue(nodes.get(j).opacityProperty(),0);
-                }
-                Timeline tl = new Timeline();
-                tl.getKeyFrames().addAll(
-                    new KeyFrame(Duration.ZERO,startValues),
-                    new KeyFrame(Duration.millis(400), actionEvent -> {
-                        getPlotChildren().removeAll(nodes);
-                        removeSeriesFromDisplay(series);
-                    },endValues)
-                );
-                tl.play();
-            } else {
-                Timeline tl = new Timeline();
-                tl.getKeyFrames().addAll(
-                    new KeyFrame(Duration.millis(400), actionEvent -> {
-                        getPlotChildren().removeAll(nodes);
-                        removeSeriesFromDisplay(series);
-                    })
-                );
-                tl.play();                
-            }
+            Timeline tl = new Timeline(createSeriesRemoveTimeLine(series, 400));
+            tl.play();
         } else {
             getPlotChildren().remove(series.getNode());
             for (Data<X,Y> d:series.getData()) getPlotChildren().remove(d.getNode());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -274,7 +274,8 @@ public final class UIClientImpl implements UIClient {
             //Image need to be created by target request only.
             //QuantumClipboard.putContent have to be rewritten in Glass manner
             //with postponed data requests (DelayedCallback data object).
-            Object platformImage = image.getPlatformImage();
+            Object platformImage = image.getWidth() > 0 && image.getHeight() > 0 ?
+                    image.getPlatformImage() : null;
             if (platformImage != null) {
                 try {
                     File temp = File.createTempFile("jfx", ".png");

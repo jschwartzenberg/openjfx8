@@ -1,0 +1,159 @@
+/*
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+package com.sun.prism.d3d;
+
+import com.sun.glass.ui.Screen;
+import com.sun.javafx.geom.Rectangle;
+import com.sun.prism.CompositeMode;
+import com.sun.prism.Graphics;
+import com.sun.prism.Presentable;
+import com.sun.prism.PresentableState;
+import com.sun.prism.RTTexture;
+
+class D3DSwapChain
+    extends D3DResource
+    implements D3DRenderTarget, Presentable, D3DContextSource {
+
+    private final D3DRTTexture texBackBuffer;
+    private final float pixelScaleFactor;
+
+    D3DSwapChain(D3DContext context, long pResource, D3DRTTexture rtt, float pixelScale) {
+        super(new D3DRecord(context, pResource));
+        texBackBuffer = rtt;
+        pixelScaleFactor = pixelScale;
+    }
+
+    @Override
+    public void dispose() {
+        texBackBuffer.dispose();
+        super.dispose();
+    }
+
+    @Override
+    public boolean prepare(Rectangle dirtyregion) {
+        D3DContext context = getContext();
+        context.flushVertexBuffer();
+        D3DGraphics g = (D3DGraphics) D3DGraphics.create(this, context);
+        if (g == null) {
+            return false;
+        }
+        int sw = texBackBuffer.getContentWidth();
+        int sh = texBackBuffer.getContentHeight();
+        int dw = this.getContentWidth();
+        int dh = this.getContentHeight();
+        if (isMSAA()) {
+            context.flushVertexBuffer();
+            g.blit(texBackBuffer, null, 0, 0, sw, sh, 0, 0, dw, dh);
+        } else {
+            g.setCompositeMode(CompositeMode.SRC);
+            g.drawTexture(texBackBuffer, 0, 0, dw, dh, 0, 0, sw, sh);
+        }
+        context.flushVertexBuffer();
+        texBackBuffer.unlock();
+        return true;
+    }
+
+    public boolean present() {
+        D3DContext context = getContext();
+        int res = nPresent(context.getContextHandle(), d3dResRecord.getResource());
+        return context.validatePresent(res);
+    }
+
+    public long getResourceHandle() {
+        return d3dResRecord.getResource();
+    }
+
+    public int getPhysicalWidth() {
+        return D3DResourceFactory.nGetTextureWidth(d3dResRecord.getResource());
+    }
+
+    public int getPhysicalHeight() {
+        return D3DResourceFactory.nGetTextureHeight(d3dResRecord.getResource());
+    }
+
+    public int getContentWidth() {
+        return getPhysicalWidth();
+    }
+
+    public int getContentHeight() {
+        return getPhysicalHeight();
+    }
+
+    public int getContentX() {
+        return 0;
+    }
+
+    public int getContentY() {
+        return 0;
+    }
+
+    private static native int nPresent(long context, long pSwapChain);
+
+    public D3DContext getContext() {
+        return d3dResRecord.getContext();
+    }
+
+    public boolean lockResources(PresentableState pState) {
+        if (pState.getRenderWidth() != texBackBuffer.getContentWidth() ||
+            pState.getRenderHeight() != texBackBuffer.getContentHeight() ||
+            pState.getRenderScale() != pixelScaleFactor)
+        {
+            return true;
+        }
+        texBackBuffer.lock();
+        return texBackBuffer.isSurfaceLost();
+    }
+
+    public Graphics createGraphics() {
+        Graphics g = D3DGraphics.create(texBackBuffer, getContext());
+        g.scale(pixelScaleFactor, pixelScaleFactor);
+        return g;
+    }
+
+    public RTTexture getRTTBackBuffer() {
+        return texBackBuffer;
+    }
+
+    public Screen getAssociatedScreen() {
+        return getContext().getAssociatedScreen();
+    }
+
+    public float getPixelScaleFactor() {
+        return pixelScaleFactor;
+    }
+
+    public boolean isOpaque() {
+        return texBackBuffer.isOpaque();
+    }
+
+    public void setOpaque(boolean opaque) {
+        texBackBuffer.setOpaque(opaque);
+    }
+
+    public boolean isMSAA() {
+        return texBackBuffer != null ? texBackBuffer.isMSAA() : false;
+    }
+}

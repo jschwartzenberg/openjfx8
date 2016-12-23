@@ -243,7 +243,9 @@ webEngine.executeScript("history.back()");
  * in that accessing properties of the {@code JavaRuntimeObject}
  * causes the Java field or method with the same name to be accessed.
  * <p> Note that the Java objects bound using
- * {@link netscape.javascript.JSObject#setMember JSObject.setMember}
+ * {@link netscape.javascript.JSObject#setMember JSObject.setMember},
+ * {@link netscape.javascript.JSObject#setSlot JSObject.setSlot}, and
+ * {@link netscape.javascript.JSObject#call JSObject.call}
  * are implemented using weak references. This means that the Java object
  * can be garbage collected, causing subsequent accesses to the JavaScript
  * objects to have no effect.
@@ -1610,6 +1612,16 @@ final public class WebEngine {
         }
     }
 
+    private static final boolean printStatusOK(PrinterJob job) {
+        switch (job.getJobStatus()) {
+            case NOT_STARTED:
+            case PRINTING:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     /**
      * Prints the current Web page using the given printer job.
      * <p>This method does not modify the state of the job, nor does it call
@@ -1619,14 +1631,20 @@ final public class WebEngine {
      * @since JavaFX 8.0
      */
     public void print(PrinterJob job) {
+        if (!printStatusOK(job)) {
+            return;
+        }
+
         PageLayout pl = job.getJobSettings().getPageLayout();
         float width = (float) pl.getPrintableWidth();
         float height = (float) pl.getPrintableHeight();
         int pageCount = page.beginPrinting(width, height);
 
         for (int i = 0; i < pageCount; i++) {
-            Node printable = new Printable(i, width);
-            job.printPage(printable);
+            if (printStatusOK(job)) {
+                Node printable = new Printable(i, width);
+                job.printPage(printable);
+            }
         }
         page.endPrinting();
     }

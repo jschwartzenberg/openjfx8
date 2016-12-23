@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -138,8 +139,17 @@ public final class WebPage {
                     CookieHandler.setDefault(new CookieManager());
                 }
             }
+
+            final boolean useJIT = Boolean.valueOf(System.getProperty(
+                    "com.sun.webkit.useJIT", "true"));
+            final boolean useDFGJIT = Boolean.valueOf(System.getProperty(
+                    "com.sun.webkit.useDFGJIT", "true"));
+
+            // Initialize WTF, WebCore and JavaScriptCore.
+            twkInitWebCore(useJIT, useDFGJIT);
             return null;
         });
+
     }
 
     private static boolean firstWebPageCreated = false;
@@ -360,6 +370,9 @@ public final class WebPage {
             paintLog.finest("rect=[" + x + ", " + y + " " + w + "x" + h +
                             "] delta=[" + dx + ", " + dy + "]");
         }
+        dx += currentFrame.scrollDx;
+        dy += currentFrame.scrollDy;
+
         if (Math.abs(dx) < w && Math.abs(dy) < h) {
             int cx = (dx >= 0) ? x : x - dx;
             int cy = (dy >= 0) ? y : y - dy;
@@ -377,13 +390,15 @@ public final class WebPage {
                     .putInt(dx).putInt(dy);
             buffer.flip();
             rq.addBuffer(buffer);
+            // Ignore previous COPYREGION
+            currentFrame.drop();
             currentFrame.addRenderQueue(rq);
-
+            currentFrame.scrollDx = dx;
+            currentFrame.scrollDy = dy;
             // Now we have to translate "old" dirty rects that fit to the frame's
             // content as the content is already scrolled at the moment by webkit.
             if (!dirtyRects.isEmpty()) {
                 WCRectangle scrollRect = new WCRectangle(x, y, w, h);
-
                 for (WCRectangle r: dirtyRects) {
                     if (scrollRect.contains(r)) {
                         if (paintLog.isLoggable(Level.FINEST)) {
@@ -407,6 +422,7 @@ public final class WebPage {
     private static final class RenderFrame {
         private final List<WCRenderQueue> rqList =
                 new LinkedList<WCRenderQueue>();
+        private int scrollDx, scrollDy;
         private final WCRectangle enclosingRect = new WCRectangle();
 
         // Called on: Event thread only
@@ -443,6 +459,8 @@ public final class WebPage {
             }
             rqList.clear();
             enclosingRect.setFrame(0, 0, 0, 0);
+            scrollDx = 0;
+            scrollDy = 0;
         }
 
         @Override
@@ -1408,6 +1426,15 @@ public final class WebPage {
         }
     }
 
+    public void resetToConsistentStateBeforeTesting() {
+        lockPage();
+        try {
+            twkResetToConsistentStateBeforeTesting(getPage());
+        } finally {
+            unlockPage();
+        }
+    }
+
     public float getZoomFactor(boolean textOnly) {
         lockPage();
         try {
@@ -1761,7 +1788,23 @@ public final class WebPage {
                 log.warning("beginPrinting() called for a disposed web page.");
                 return 0;
             }
-            return twkBeginPrinting(getPage(), width, height);
+            AtomicReference<Integer> retVal = new AtomicReference<>(0);
+            final CountDownLatch l = new CountDownLatch(1);
+            Invoker.getInvoker().invokeOnEventThread(() -> {
+                try {
+                    int nPages = twkBeginPrinting(getPage(), width, height);
+                    retVal.set(nPages);
+                } finally {
+                    l.countDown();
+                }
+            });
+
+            try {
+                l.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return retVal.get();
         } finally {
             unlockPage();
         }
@@ -1774,7 +1817,20 @@ public final class WebPage {
                 log.warning("endPrinting() called for a disposed web page.");
                 return;
             }
-            twkEndPrinting(getPage());
+            final CountDownLatch l = new CountDownLatch(1);
+            Invoker.getInvoker().invokeOnEventThread(() -> {
+                try {
+                    twkEndPrinting(getPage());
+                } finally {
+                    l.countDown();
+                }
+            });
+
+            try {
+                l.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         } finally {
             unlockPage();
         }
@@ -2194,11 +2250,11 @@ public final class WebPage {
         }
     }
 
-    private String[] fwkChooseFile(String initialFileName, boolean multiple) {
+    private String[] fwkChooseFile(String initialFileName, boolean multiple, String mimeFilters) {
         log.log(Level.FINER, "Choose file, initial=" + initialFileName);
 
         return uiClient != null
-                ? uiClient.chooseFile(initialFileName, multiple)
+                ? uiClient.chooseFile(initialFileName, multiple, mimeFilters)
                 : null;
     }
 
@@ -2461,6 +2517,7 @@ public final class WebPage {
     // Native methods
     // *************************************************************************
 
+    private static native void twkInitWebCore(boolean useJIT, boolean useDFGJIT);
     private native long twkCreatePage(boolean editable);
     private native void twkInit(long pPage, boolean usePlugins, float devicePixelScale);
     private native void twkDestroyPage(long pPage);
@@ -2481,6 +2538,7 @@ public final class WebPage {
 
     private native void twkOpen(long pFrame, String url);
     private native void twkOverridePreference(long pPage, String key, String value);
+    private native void twkResetToConsistentStateBeforeTesting(long pPage);
     private native void twkLoad(long pFrame, String text, String contentType);
     private native boolean twkIsLoading(long pFrame);
     private native void twkStop(long pFrame);

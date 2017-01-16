@@ -25,9 +25,12 @@
 
 package com.sun.webkit.dom;
 
+import com.sun.webkit.Disposer;
+import com.sun.webkit.DisposerRecord;
 import com.sun.webkit.Invoker;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.util.concurrent.atomic.AtomicInteger;
 import netscape.javascript.JSException;
 
 class JSObject extends netscape.javascript.JSObject {
@@ -39,14 +42,30 @@ class JSObject extends netscape.javascript.JSObject {
     private final long peer;     // C++ peer - now it is the DOMObject instance
     private final int peer_type; // JS_XXXX const
 
+    // for testing purposes only
+    private static AtomicInteger peerCount = new AtomicInteger();
+
     JSObject(long peer, int peer_type) {
         this.peer = peer;
         this.peer_type = peer_type;
+        if (peer_type == JS_CONTEXT_OBJECT) {
+            // if peer type is JS_CONTEXT_OBJECT, the JSObject is already GC Protected
+            // from native side and we want to add JSObject to Disposer, only in this case.
+            Disposer.addRecord(this, new SelfDisposer(peer, peer_type));
+            peerCount.incrementAndGet();
+        }
     }
 
     long getPeer() {
         return peer;
     }
+
+    // for testing purposes only
+    static int test_getPeerCount() {
+        return peerCount.get();
+    }
+
+    private static native void unprotectImpl(long peer, int peer_type);
 
     @Override
     public Object eval(String s) throws JSException {
@@ -138,5 +157,23 @@ class JSObject extends netscape.javascript.JSObject {
         if (value instanceof Throwable)
             ex.initCause((Throwable) value);
         return ex;
+    }
+
+    private static final class SelfDisposer implements DisposerRecord {
+        long peer;
+        final int peer_type;
+
+        private SelfDisposer(long peer, int peer_type) {
+            this.peer = peer;
+            this.peer_type = peer_type;
+        }
+
+        @Override public void dispose() {
+            if (peer != 0) {
+                JSObject.unprotectImpl(peer, peer_type);
+                peer = 0;
+                peerCount.decrementAndGet();
+            }
+        }
     }
 }

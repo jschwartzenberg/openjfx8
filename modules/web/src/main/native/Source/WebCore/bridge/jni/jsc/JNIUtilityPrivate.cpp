@@ -70,7 +70,7 @@ static jobject convertArrayInstanceToJavaArray(ExecState* exec, JSArray* jsArray
                 for (unsigned i = 0; i < length; i++) {
                     JSValue item = jsArray->get(exec, i);
                     String stringValue = item.toString(exec)->value(exec);
-                    env->SetObjectArrayElement(jarray, i, env->NewStringUTF(stringValue.utf8().data()));
+                    env->SetObjectArrayElement(jarray, i, stringValue.toJavaString(env).releaseLocal());
                 }
             }
             break;
@@ -225,7 +225,7 @@ jvalue convertValueToJValue(ExecState* exec, RootObject* rootObject, JSValue val
                         // Since instance->javaInstance() is WeakGlobalRef, creating a localref to safeguard javaInstance() from GC
                         JLObject jlinstance(instance->javaInstance(), true);
                         if (!jlinstance) {
-                            LOG_ERROR("Could not get javaInstance for %p in JNIUtilityPrivate::convertValueToJValue", jlinstance);
+                            LOG_ERROR("Could not get javaInstance for %p in JNIUtilityPrivate::convertValueToJValue", (jobject)jlinstance);
                             return result;
                         }
                         result.l = instance->javaInstance();
@@ -238,7 +238,7 @@ jvalue convertValueToJValue(ExecState* exec, RootObject* rootObject, JSValue val
                     // Since array->javaArray() is WeakGlobalRef, creating a localref to safeguard javaInstance() from GC
                     JLObject jlinstancearray(array->javaArray(), true);
                     if (!jlinstancearray) {
-                        LOG_ERROR("Could not get javaArrayInstance for %p in JNIUtilityPrivate::convertValueToJValue", jlinstancearray);
+                        LOG_ERROR("Could not get javaArrayInstance for %p in JNIUtilityPrivate::convertValueToJValue", (jobject)jlinstancearray);
                         return result;
                     }
                     result.l = array->javaArray();
@@ -251,7 +251,7 @@ jvalue convertValueToJValue(ExecState* exec, RootObject* rootObject, JSValue val
                         static JGClass nodeImplClass = env->FindClass("com/sun/webkit/dom/NodeImpl");
                         static jmethodID getImplID = env->GetStaticMethodID(nodeImplClass, "getCachedImpl",
                                                                      "(J)Lorg/w3c/dom/Node;");
-                        WebCore::Node *peer = &jsnode->impl();
+                        WebCore::Node *peer = &jsnode->wrapped();
                         peer->ref(); //deref is in NodeImpl disposer
                         result.l = env->CallStaticObjectMethod(
                             nodeImplClass,
@@ -276,7 +276,7 @@ jvalue convertValueToJValue(ExecState* exec, RootObject* rootObject, JSValue val
                 if (value.isString() && !strcmp(javaClassName, "java.lang.Object")) {
                     String stringValue = asString(value)->value(exec);
                     JNIEnv* env = getJNIEnv();
-                    jobject javaString = env->NewStringUTF(stringValue.utf8().data());
+                    jobject javaString = stringValue.toJavaString(env).releaseLocal();
                     result.l = javaString;
                 } else if (value.isString() && !strcmp(javaClassName, "java.lang.Character")) {
                     JNIEnv* env = getJNIEnv();
@@ -316,7 +316,7 @@ jvalue convertValueToJValue(ExecState* exec, RootObject* rootObject, JSValue val
                 if (!value.isNull()) {
                     String stringValue = value.toString(exec)->value(exec);
                     JNIEnv* env = getJNIEnv();
-                    jobject javaString = env->NewStringUTF(stringValue.utf8().data());
+                    jobject javaString = stringValue.toJavaString(env).releaseLocal();
                     result.l = javaString;
                 }
             }
@@ -437,7 +437,7 @@ jthrowable dispatchJNICall(int count, RootObject* rootObject, jobject obj, bool 
     JLObject jlinstance(obj, true);
 
     if (!jlinstance) {
-        LOG_ERROR("Could not get javaInstance for %p in JNIUtilityPrivate::dispatchJNICall", jlinstance);
+        LOG_ERROR("Could not get javaInstance for %p in JNIUtilityPrivate::dispatchJNICall", (jobject)jlinstance);
         return NULL;
     }
 

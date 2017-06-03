@@ -1,0 +1,114 @@
+/*
+ * Copyright (C) 2012 Google Inc. All rights reserved.
+ * Copyright (C) 2013 Nokia Corporation and/or its subsidiary(-ies).
+ * Copyright (C) 2015 Ericsson AB. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer
+ *    in the documentation and/or other materials provided with the
+ *    distribution.
+ * 3. Neither the name of Google Inc. nor the names of its contributors
+ *    may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+[
+    Conditional=MEDIA_STREAM,
+    ActiveDOMObject,
+    CustomConstructor(Dictionary rtcConfiguration),
+    ConstructorCallWith=ScriptExecutionContext,
+    ConstructorRaisesException,
+    InterfaceName=webkitRTCPeerConnection,
+] interface RTCPeerConnection : EventTarget {
+
+    // Private functions called by runQueuedOperation() (RTCPeerConnectionInternals.js)
+    [Private] Promise queuedCreateOffer(optional Dictionary offerOptions);
+    [Private] Promise queuedCreateAnswer(optional Dictionary answerOptions);
+    [Private] Promise queuedSetLocalDescription(RTCSessionDescription description);
+    [Private] Promise queuedSetRemoteDescription(RTCSessionDescription description);
+    [Private] Promise queuedAddIceCandidate(RTCIceCandidate candidate);
+
+    [Private] Promise privateGetStats(optional MediaStreamTrack selector);
+
+    [JSBuiltin] Promise createOffer(optional Dictionary offerOptions);
+    // Legacy signature: void createOffer(RTCSessionDescriptionCallback successCallback
+    //                                    RTCPeerConnectionErrorCallback errorCallback,
+    //                                    optional Dictionary offerOptions);
+
+    [JSBuiltin] Promise createAnswer(optional Dictionary answerOptions);
+    // Legacy signature: void createAnswer(RTCSessionDescriptionCallback successCallback
+    //                                    RTCPeerConnectionErrorCallback errorCallback,
+    //                                    optional Dictionary answerOptions);
+
+    sequence<RTCRtpSender> getSenders();
+    sequence<RTCRtpReceiver> getReceivers();
+
+    [StrictTypeChecking, RaisesException] RTCRtpSender addTrack(MediaStreamTrack track, MediaStream... streams);
+    [StrictTypeChecking, RaisesException] void removeTrack(RTCRtpSender sender);
+
+    [JSBuiltin] Promise setLocalDescription(RTCSessionDescription description);
+    // Legacy signature: void setLocalDescription(RTCSessionDescription description
+    //                                            VoidCallback successCallback,
+    //                                            RTCPeerConnectionErrorCallback errorCallback);
+
+    readonly attribute RTCSessionDescription localDescription;
+    readonly attribute RTCSessionDescription currentLocalDescription;
+    readonly attribute RTCSessionDescription pendingLocalDescription;
+
+    [JSBuiltin] Promise setRemoteDescription(RTCSessionDescription description);
+    // Legacy signature: void setRemoteDescription(RTCSessionDescription description
+    //                                            VoidCallback successCallback,
+    //                                            RTCPeerConnectionErrorCallback errorCallback);
+
+    readonly attribute RTCSessionDescription remoteDescription;
+    readonly attribute RTCSessionDescription currentRemoteDescription;
+    readonly attribute RTCSessionDescription pendingRemoteDescription;
+
+    readonly attribute DOMString signalingState;
+
+    [JSBuiltin] Promise addIceCandidate(RTCIceCandidate candidate);
+    // Legacy signature: void addIceCandidate(RTCIceCandidate candidate
+    //                                        VoidCallback successCallback,
+    //                                        RTCPeerConnectionErrorCallback errorCallback);
+
+    readonly attribute DOMString iceGatheringState;
+    readonly attribute DOMString iceConnectionState;
+
+    RTCConfiguration getConfiguration();
+    [RaisesException] void setConfiguration(Dictionary configuration);
+
+    [JSBuiltin] Promise getStats(optional MediaStreamTrack selector);
+    // Legacy signature: void getStats(MediaStreamTrack selector
+    //                                 RTCStatsCallback successCallback,
+    //                                 RTCPeerConnectionErrorCallback errorCallback);
+
+    [RaisesException] RTCDataChannel createDataChannel([TreatNullAs=EmptyString] DOMString label, optional Dictionary options);
+
+    void close();
+
+    attribute EventHandler onnegotiationneeded;
+    attribute EventHandler onicecandidate;
+    attribute EventHandler onsignalingstatechange;
+    attribute EventHandler ontrack;
+    attribute EventHandler oniceconnectionstatechange;
+    attribute EventHandler onicegatheringstatechange;
+    attribute EventHandler ondatachannel;
+};

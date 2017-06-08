@@ -240,9 +240,6 @@ my %classData = (
             "Node renameNode(Node n, String namespaceURI, String qualifiedName) throws DOMException",
             "DOMConfiguration getDomConfig()",
             "void normalizeDocument()",
-            # document.documentURI was writable in DOM3 Core, but is read-only in DOM4
-            # (see http://www.w3.org/TR/2011/WD-dom-20110915/#document).
-            "void setDocumentURI(String documentURI)"
         ],
         skip => {
             "webkitExitPointerLock" => 1,
@@ -500,21 +497,6 @@ my %nativeType = (
     "unrestricted float" => "float",
 );
 
-sub proxyPrinter {
-    my $fcaller = (caller(1))[3];
-    my ($ffile,$fname) = $fcaller =~ /(.*)::(.*)/s;
-    my $line = (caller(1))[2];
-    my $ev = "_$fname('" . join("','",@_) . "')";
-    my $retv = eval $ev; warn $@ if $@;
-    print " ===== //XXX: $ffile:$line call to $ev ";
-    if (defined $retv) {
-        print "returns $retv\n";
-    } else {
-        print "returns undef OUCH\n";
-    }
-    return $retv;
-}
-
 # Default constructor
 sub new
 {
@@ -637,8 +619,7 @@ sub IsJavaPimitive
     return 0;
 }
 
-sub GetJavaParamClassName { return proxyPrinter(@_);}
-sub _GetJavaParamClassName
+sub GetJavaParamClassName
 {
     my $name = shift;
 
@@ -705,6 +686,7 @@ sub ShouldSkipType
 {
     my $interfaceName = shift;
     my $typeInfo = shift;
+    my $functionName = $typeInfo->signature->name;
 
     return 1 if isSkipSignature($interfaceName, $typeInfo->signature->name);
     return 1 if $typeInfo->signature->extendedAttributes->{"Custom"} and !GetCustomCPPMethodBody($interfaceName, $typeInfo->signature->name);
@@ -721,8 +703,7 @@ sub ShouldSkipType
     return 0;
 }
 
-sub GetExceptionSuffix { return proxyPrinter(@_);}
-sub _GetExceptionSuffix
+sub GetExceptionSuffix
 {
     my $exceptionArray = shift;
     my $exceptionSuffix = "";
@@ -736,8 +717,7 @@ sub _GetExceptionSuffix
     return $exceptionSuffix;
 }
 
-sub GetExceptionCPPParam { return proxyPrinter(@_);}
-sub _GetExceptionCPPParam
+sub GetExceptionCPPParam
 {
     my $exceptionArray = shift;
     my $exceptionSuffix = "";
@@ -753,9 +733,7 @@ sub _GetExceptionCPPParam
     return $exceptionSuffix;
 }
 
-sub GetJavaToNativeType { return proxyPrinter(@_);}
-sub _GetJavaToNativeType
-# sub GetJavaToNativeType
+sub GetJavaToNativeType
 {
     my $argType = shift;
 
@@ -769,8 +747,7 @@ sub _GetJavaToNativeType
     return "long";
 }
 
-sub GetJavaToNativeArgValue { return proxyPrinter(@_);}
-sub _GetJavaToNativeArgValue
+sub GetJavaToNativeArgValue
 {
     my $argType = GetCPPInterface(shift);
     my $argValue = shift;
@@ -783,8 +760,7 @@ sub _GetJavaToNativeArgValue
     return GetTransferTypeName($argType) . ".getPeer(${argValue})";
 }
 
-sub GetJavaToNativeReturnValue { return proxyPrinter(@_);}
-sub _GetJavaToNativeReturnValue
+sub GetJavaToNativeReturnValue
 {
     my $returnType = GetCPPInterface(shift);
     my $twkFunctionCall = shift;
@@ -814,8 +790,7 @@ sub isStringAttribute
     return 0;
 }
 
-sub GetJavaCPPNativeType { return proxyPrinter(@_);}
-sub _GetJavaCPPNativeType
+sub GetJavaCPPNativeType
 {
     my $argType = shift;
 
@@ -830,8 +805,7 @@ sub _GetJavaCPPNativeType
     return "jlong";
 }
 
-sub GetJavaCPPNativeArgValue { return proxyPrinter(@_);}
-sub _GetJavaCPPNativeArgValue
+sub GetJavaCPPNativeArgValue
 {
     my $argType = shift;
     my $argValue = shift;
@@ -844,8 +818,7 @@ sub _GetJavaCPPNativeArgValue
     return "static_cast<${argType}*>(jlong_to_ptr(${argValue}))";
 }
 
-sub GetJavaCPPNativeReturnValue { return proxyPrinter(@_);}
-sub _GetJavaCPPNativeReturnValue
+sub GetJavaCPPNativeReturnValue
 {
     my $returnType = shift;
     my $nativeFunctionCall = shift;
@@ -856,11 +829,11 @@ sub _GetJavaCPPNativeReturnValue
     # interface
     $returnType = GetCPPInterface($returnType);
     # return "0" if $returnType eq "EventListener";
-    return "JavaReturn<$returnType>(env, " . $nativeFunctionCall . ")";
+    return "JavaReturn<$returnType>(env, " . $nativeFunctionCall . ")" if $returnType eq "String";
+    return "JavaReturn<$returnType>(env, WTF::getPtr(" . $nativeFunctionCall . "))";
 }
 
-sub GetJavaTWKCallName { return proxyPrinter(@_);}
-sub _GetJavaTWKCallName
+sub GetJavaTWKCallName
 {
     my $interfaceCallName = shift;
 
@@ -892,8 +865,7 @@ sub IsDefinedInCommandLine
     return 1;
 }
 
-sub GetJavaMethodName { return proxyPrinter(@_);}
-sub _GetJavaMethodName
+sub GetJavaMethodName
 {
     my $interfaceName = shift;
     my $methodName = shift;
@@ -906,8 +878,7 @@ sub _GetJavaMethodName
     return $methodName;
 }
 
-sub GetCustomCPPMethodBody { return proxyPrinter(@_);}
-sub _GetCustomCPPMethodBody
+sub GetCustomCPPMethodBody
 {
     my $interfaceName = shift;
     my $methodName = shift;
@@ -944,7 +915,6 @@ sub Generate
     my $numConstants = @{$dataNode->constants};
     my $numAttributes = @{$dataNode->attributes};
     my $numFunctions = @{$dataNode->functions};
-
     # package setup
     push(@headerJava, "package com.sun.webkit.dom;\n\n");
 
@@ -956,14 +926,14 @@ sub Generate
                               . "    UNUSED_PARAM(clazz);\n"
                               . "    UNUSED_PARAM(peer);\n";
     # imports
-    my $isBaseClass = $javaParentClassName eq "";
+    my $isBaseClass = (($javaParentClassName eq "") or ($javaParentClassName eq "EventTarget"));
     if ($isBaseClass) {
         $importsJava{"com.sun.webkit.Disposer"} = 1;
         $importsJava{"com.sun.webkit.DisposerRecord"} = 1;
     } else {
         $javaParentClassName = GetTransferTypeName($javaParentClassName);
     }
-    my $isBaseEventTarget = ($isBaseClass and $dataNode->extendedAttributes->{"EventTarget"});
+    my $isBaseEventTarget = ($isBaseClass and ($javaParentClassName eq "EventTarget"));
     if ($isBaseEventTarget) {
         $importsJava{"com.sun.webkit.dom.JSObject"} = 1;
         $importsJava{"org.w3c.dom.events.EventTarget"} = 1;
@@ -1522,6 +1492,7 @@ sub WriteData
     # Open files for writing...
     my $javaFileName = "${javapath}/" . GetTransferTypeName($name) . ".java";
     my $cppFileName = "${outputDir}/" . FileNamePrefix . $name . ".cpp";
+    my $jniDummyHeaderFileName = "${outputDir}/" . FileNamePrefix . $name . ".h";
 
     # Update a .java file if the contents are changed.
     my $contentsJava = "// Automatically generated by CodeGeneratorJava.pm. Do not edit.\n\n";
@@ -1532,6 +1503,7 @@ sub WriteData
     # Update a .cpp file if the contents are changed.
 
     my $contentsCPP = "// Automatically generated by CodeGeneratorJava.pm. Do not edit.\n\n";
+    $codeGenerator->UpdateFile($jniDummyHeaderFileName, $contentsCPP);
     $contentsCPP .= "#include \"config.h\"\n"
                   . "#include \"wtf/RefPtr.h\"\n\n";
 

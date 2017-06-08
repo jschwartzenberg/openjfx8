@@ -18,14 +18,13 @@
 #include "DataObjectJava.h"
 #include "DragData.h"
 #include "JavaEnv.h"
-#include "JavaRef.h"
-#include "WTFString.h"
-#include "StringBuilder.h"
+#include <wtf/java/JavaRef.h>
+#include <wtf/text/WTFString.h>
+#include <wtf/text/StringBuilder.h>
 #include "NamedNodeMap.h"
 #include "Attr.h"
 #include "HTMLNames.h"
 #include "HTMLParserIdioms.h"
-#include "com_sun_webkit_WCPasteboard.h"
 
 #include "wtf/Ref.h"
 

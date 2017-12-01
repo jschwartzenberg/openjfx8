@@ -162,10 +162,12 @@ extern HMODULE _priv_gst_dll_handle;
 #include <link.h>
 #include <dlfcn.h>
 
-static const int AVCODEC_EXPLICIT_VERSIONS[] = { 53, 54, 55, 56 };
+// For libav (libavcodec.so)
+static const int AVCODEC_LIBAV_EXPLICIT_VERSIONS[] = { 53, 54, 55, 56 };
+// For ffmpeg (libavcodec-ffmpeg.so)
 static const int AVCODEC_FFMPEG_EXPLICIT_VERSIONS[] = { 56 };
-
-typedef unsigned (*avcodec_version_proto)();
+// For libav or ffmpeg (libavcodec.so)
+static const int AVCODEC_EXPLICIT_VERSIONS[] = { 57 };
 
 /*
  * Callback passed to dl_iterate_phdr(): finds the path of
@@ -1172,6 +1174,37 @@ is_blacklisted_hidden_directory (const gchar * dirent)
 }
 #endif
 
+#ifdef GSTREAMER_LITE
+// Only for Linux 32-bit
+#if defined(LINUX) && !defined(__x86_64__)
+gpointer load_plugin(gpointer data)
+{
+  return dlopen((gchar*)data, RTLD_GLOBAL|RTLD_NOW);
+}
+
+gboolean preload_plugin_on_thread(int version, gchar *filename)
+{
+  void *handle = NULL;
+
+  if (version != 57) // Only needed for 57
+    return TRUE;
+
+  if (filename == NULL)
+    return FALSE;
+
+  GThread *thread = g_thread_create(load_plugin, filename, TRUE, NULL);
+  if (thread != NULL) {
+    handle = g_thread_join(thread);
+    if (handle != NULL) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+#endif
+#endif // GSTREAMER_LITE
+
 static gboolean
 gst_registry_scan_path_level (GstRegistryScanContext * context,
     const gchar * path, int level)
@@ -1249,62 +1282,97 @@ gst_registry_scan_path_level (GstRegistryScanContext * context,
     }
 #else // GSTREAMER_LITE
 
-  for (gstlite_plugins_list_index = 0; gstlite_plugins_list[gstlite_plugins_list_index] != NULL; gstlite_plugins_list_index++)
-  {
-      filename_partial = g_build_filename (path, gstlite_plugins_list[gstlite_plugins_list_index], NULL);
+  for (gstlite_plugins_list_index = 0; gstlite_plugins_list[gstlite_plugins_list_index] != NULL; gstlite_plugins_list_index++) {
+    filename_partial = g_build_filename (path, gstlite_plugins_list[gstlite_plugins_list_index], NULL);
 #ifdef LINUX
-      if (g_str_has_suffix(filename_partial, "libavplugin")) // Check libav version and load correspondent module.
-      {
-          int vi = (sizeof(AVCODEC_EXPLICIT_VERSIONS)/sizeof(AVCODEC_EXPLICIT_VERSIONS[0]));
-
-          while(!avcHandle && --vi >= 0)
-          {
-              int version = AVCODEC_EXPLICIT_VERSIONS[vi];
-              gchar* libname = g_strdup_printf("libavcodec.so.%d", version);
-              avcHandle = dlopen(libname, RTLD_NOW);
-              g_free(libname);
-          }
-
-          // Look for libavcodec-ffmpeg if libavcodec is not available
-          if (avcHandle == NULL)
-          {
-              vi = (sizeof(AVCODEC_FFMPEG_EXPLICIT_VERSIONS)/sizeof(AVCODEC_FFMPEG_EXPLICIT_VERSIONS[0]));
-              while(!avcHandle && --vi >= 0)
-              {
-                int version = AVCODEC_FFMPEG_EXPLICIT_VERSIONS[vi];
-                gchar* libname = g_strdup_printf("libavcodec-ffmpeg.so.%d", version);
-                avcHandle = dlopen(libname, RTLD_NOW);
-                g_free(libname);
-              }
-
-              if (avcHandle)
-                isAVCFFMPEG = TRUE;
-          }
-
-          if (avcHandle)
-          {
-              dlclose(avcHandle);
-              avcHandle = NULL;
-
-              // Try simple name first. OpenJDK build may contain the latest bits.
-              filename = g_strdup_printf("%s%s", filename_partial, GST_EXTRA_MODULE_SUFFIX);
-              if (g_stat (filename, &file_status) < 0) // Not available, create a versioned filename
-              {
-                  g_free(filename);
-                  if (isAVCFFMPEG)
-                    filename = g_strdup_printf("%s-ffmpeg-%d%s", filename_partial, AVCODEC_FFMPEG_EXPLICIT_VERSIONS[vi], GST_EXTRA_MODULE_SUFFIX);
-                  else
-                    filename = g_strdup_printf("%s-%d%s", filename_partial, AVCODEC_EXPLICIT_VERSIONS[vi], GST_EXTRA_MODULE_SUFFIX);
-              }
-          }
-          else
-          {
-              g_free(filename_partial);
-              continue; // No libavcodec.so installed.
-          }
+    if (g_str_has_suffix(filename_partial, "libavplugin")) { // Check libav version and load correspondent module.
+      int plugin_version = 0;
+      // Look for libavcodec and check its version to figure out if it is
+      // libav or ffmpeg. Starting from 57 and up
+      int vi = (sizeof(AVCODEC_EXPLICIT_VERSIONS)/sizeof(AVCODEC_EXPLICIT_VERSIONS[0]));
+      while(!avcHandle && --vi >= 0) {
+        int version = AVCODEC_EXPLICIT_VERSIONS[vi];
+        gchar* libname = g_strdup_printf("libavcodec.so.%d", version);
+        avcHandle = dlopen(libname, RTLD_NOW);
+        g_free(libname);
       }
-      else
-          filename = g_strconcat(filename_partial, GST_EXTRA_MODULE_SUFFIX, NULL);
+
+      // Check if it is libav or ffmpeg
+      if (avcHandle) {
+        unsigned int (*av_version)(void);
+        av_version = dlsym(avcHandle, "avcodec_version");
+        if (av_version != NULL) {
+          unsigned int version = (*av_version)();
+          unsigned int micro = version & 0xFF;
+          if (micro >= 100)
+            isAVCFFMPEG = TRUE;
+          plugin_version = AVCODEC_EXPLICIT_VERSIONS[vi];
+        } else { // Something wrong
+          dlclose(avcHandle);
+          avcHandle = NULL;
+        }
+      }
+
+      // Look for libavcodec-ffmpeg. For 56 only
+      if (avcHandle == NULL) {
+        vi = (sizeof(AVCODEC_FFMPEG_EXPLICIT_VERSIONS)/sizeof(AVCODEC_FFMPEG_EXPLICIT_VERSIONS[0]));
+        while(!avcHandle && --vi >= 0) {
+          int version = AVCODEC_FFMPEG_EXPLICIT_VERSIONS[vi];
+          gchar* libname = g_strdup_printf("libavcodec-ffmpeg.so.%d", version);
+          avcHandle = dlopen(libname, RTLD_NOW);
+          g_free(libname);
+        }
+
+        if (avcHandle) {
+          plugin_version = AVCODEC_FFMPEG_EXPLICIT_VERSIONS[vi];
+          isAVCFFMPEG = TRUE;
+        }
+      }
+
+      // Looks for libav 56 and below
+      if (avcHandle == NULL) {
+        vi = (sizeof(AVCODEC_LIBAV_EXPLICIT_VERSIONS)/sizeof(AVCODEC_LIBAV_EXPLICIT_VERSIONS[0]));
+        while(!avcHandle && --vi >= 0) {
+          int version = AVCODEC_LIBAV_EXPLICIT_VERSIONS[vi];
+          gchar* libname = g_strdup_printf("libavcodec.so.%d", version);
+          avcHandle = dlopen(libname, RTLD_NOW);
+          g_free(libname);
+        }
+
+        if (avcHandle) {
+          plugin_version = AVCODEC_LIBAV_EXPLICIT_VERSIONS[vi];
+        }
+      }
+
+      if (avcHandle) {
+        dlclose(avcHandle);
+        avcHandle = NULL;
+
+        // Try simple name first. OpenJDK build may contain the latest bits.
+        filename = g_strdup_printf("%s%s", filename_partial, GST_EXTRA_MODULE_SUFFIX);
+        if (g_stat (filename, &file_status) < 0) { // Not available, create a versioned filename
+          g_free(filename);
+          if (isAVCFFMPEG)
+            filename = g_strdup_printf("%s-ffmpeg-%d%s", filename_partial, plugin_version, GST_EXTRA_MODULE_SUFFIX);
+          else
+            filename = g_strdup_printf("%s-%d%s", filename_partial, plugin_version, GST_EXTRA_MODULE_SUFFIX);
+        }
+#if defined(LINUX) && !defined(__x86_64__)
+        if (!preload_plugin_on_thread(plugin_version, filename)) {
+          g_free(filename_partial);
+          filename_partial = NULL;
+          g_free(filename);
+          filename = NULL;
+          continue; // If we fail preload do not load such plugin.
+        }
+#endif
+      } else {
+        g_free(filename_partial);
+        continue; // No libavcodec.so installed.
+      }
+    } else {
+      filename = g_strconcat(filename_partial, GST_EXTRA_MODULE_SUFFIX, NULL);
+    }
 #else
     filename = g_strconcat(filename_partial, GST_EXTRA_MODULE_SUFFIX, NULL);
 #endif

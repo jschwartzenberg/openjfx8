@@ -130,4 +130,6 @@ public interface FontFactory {
                                    float size, boolean register);
 
     public boolean isPlatformFont(String name);
+
+    public void dispose();
 }

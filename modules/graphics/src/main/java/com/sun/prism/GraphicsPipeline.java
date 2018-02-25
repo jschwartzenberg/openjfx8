@@ -55,7 +55,7 @@ public abstract class GraphicsPipeline {
          */
         SM3
     }
-    private FontFactory fontFactory;
+    protected FontFactory fontFactory;
 
     public abstract boolean init();
     public void dispose() {

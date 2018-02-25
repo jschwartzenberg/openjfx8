@@ -295,6 +295,9 @@ class OS {
     static final native int AddRef(long ptr);
     static final native int Release(long ptr);
 
+    //CoUninitialize
+    static final native void CoUninitialize();
+
     //IDWriteTextAnalyzer
     static final native int AnalyzeScript(long ptr, long source, int start, int length, long sink);
     static final native int GetGlyphs(long ptr,

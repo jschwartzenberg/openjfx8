@@ -71,6 +71,14 @@ public class DWFactory extends PrismFontFactory {
     }
 
     @Override
+    public void dispose() {
+        checkThread();
+        if (WIC_FACTORY != null) {
+            OS.CoUninitialize();
+        }
+    }
+
+    @Override
     protected boolean registerEmbeddedFont(String path) {
         IDWriteFactory factory = DWFactory.getDWriteFactory();
         IDWriteFontFile fontFile = factory.CreateFontFileReference(path);

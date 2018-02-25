@@ -867,8 +867,6 @@ JNIEXPORT jlong JNICALL OS_NATIVE(_1WICCreateImagingFactory)
             IID_PPV_ARGS(&result)
             );
 
-    /* Unload COM as no other COM objects will be create directly */
-    CoUninitialize();
     return SUCCEEDED(hr) ? (jlong)result : NULL;
 }
 
@@ -922,6 +920,12 @@ JNIEXPORT jint JNICALL OS_NATIVE(Release)
     (JNIEnv *env, jclass that, jlong arg0)
 {
     return ((IUnknown *)arg0)->Release();
+}
+
+JNIEXPORT void JNICALL OS_NATIVE(CoUninitialize)
+    (JNIEnv *env, jclass that)
+{
+    CoUninitialize();
 }
 
 /***********************************************/

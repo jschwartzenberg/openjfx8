@@ -161,6 +161,9 @@ public final class D3DPipeline extends GraphicsPipeline {
                     + Thread.currentThread().getName() + "]");
         }
         notifyAllResourcesReleased();
+        if (null != fontFactory) {
+            fontFactory.dispose();
+        }
         nDispose();
         for (int i=0; i!=factories.length; ++i) {
             factories[i] = null;

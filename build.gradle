@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1768,6 +1768,12 @@ project(":systemTests") {
             exclude("**/com/sun/javafx/application/Swing*.*");
         }
 
+        dependencies {
+            testCompile project(":graphics").sourceSets.test.output
+            testCompile project(":base").sourceSets.test.output
+            testCompile project(":controls").sourceSets.test.output
+        }
+
         forkEvery = 1
     }
 }
@@ -2981,7 +2987,8 @@ compileTargets { t ->
         exclude("js/**/*", // er...
                 "PrismLoaderBackend*", // More decora stuff
                 "**/*.stg",    // any glue files for decora must be excluded
-                "**/*.java");  // Builder java files are in build/classes and should be excluded
+                "**/*.java",   // Builder java files are in build/classes and should be excluded
+                "com/sun/javafx/webkit/drt"); // Drt class
 
         // Filter out platform specific Java sources (glass) when compiling for other targets
         if (targetProperties.containsKey('jfxrtJarExcludes')) {

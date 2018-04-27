@@ -1235,6 +1235,14 @@ iterate_adapter:
   if (desired >= aiff->bytes_per_sample && aiff->bytes_per_sample > 0)
     desired -= (desired % aiff->bytes_per_sample);
 
+#ifdef GSTREAMER_LITE
+  if (desired == 0) {
+    GST_ELEMENT_ERROR (aiff, STREAM, DEMUX, (NULL),
+              ("Invalid stream"));
+    return GST_FLOW_ERROR;
+  }
+#endif // GSTREAMER_LITE
+
   GST_LOG_OBJECT (aiff, "Fetching %" G_GINT64_FORMAT " bytes of data "
       "from the sinkpad", desired);
 

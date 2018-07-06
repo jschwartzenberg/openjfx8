@@ -188,22 +188,26 @@ bool RenderThemeJava::paintWidget(
 
     WTF::Vector<jbyte> extParams;
     if (JNI_EXPAND(SLIDER) == widgetIndex && is<RenderSlider>(object)) {
-        HTMLInputElement& input = downcast<RenderSlider>(object).element(); //XXX: recheck
+        HTMLInputElement& input = downcast<RenderSlider>(object).element();
 
-        extParams.grow(sizeof(jint) + 3*sizeof(jfloat));
+        extParams.grow(sizeof(jint) + 3 * sizeof(jfloat));
         jbyte *data = extParams.data();
-        *(jint *)data = jint((object.style().appearance() == SliderHorizontalPart)
+        auto isVertical = jint((object.style().appearance() == SliderHorizontalPart)
             ? 0
             : 1);
+        memcpy(data, &isVertical, sizeof(isVertical));
         data += sizeof(jint);
 
-        *(jfloat *)data = jfloat(input.maximum());
+        auto maximum = jfloat(input.maximum());
+        memcpy(data, &maximum, sizeof(maximum));
         data += sizeof(jfloat);
 
-        *(jfloat *)data = jfloat(input.minimum());
+        auto minimum = jfloat(input.minimum());
+        memcpy(data, &minimum, sizeof(minimum));
         data += sizeof(jfloat);
 
-        *(jfloat *)data = jfloat(input.valueAsNumber());
+        auto valueAsNumber = jfloat(input.valueAsNumber());
+        memcpy(data, &valueAsNumber, sizeof(valueAsNumber));
     } else if (JNI_EXPAND(PROGRESS_BAR) == widgetIndex) {
 #if ENABLE(PROGRESS_ELEMENT)
         if (is<RenderProgress>(object)) {
@@ -211,16 +215,20 @@ bool RenderThemeJava::paintWidget(
 
             extParams.grow(sizeof(jint) + 3*sizeof(jfloat));
             jbyte *data = extParams.data();
-            *(jint *)data = jint(renderProgress.isDeterminate() ? 1 : 0);
+            auto isDeterminate = jint(renderProgress.isDeterminate() ? 1 : 0);
+            memcpy(data, &isDeterminate, sizeof(isDeterminate));
             data += sizeof(jint);
 
-            *(jfloat *)data = jfloat(renderProgress.position());
+            auto position = jfloat(renderProgress.position());
+            memcpy(data, &position, sizeof(position));
             data += sizeof(jfloat);
 
-            *(jfloat *)data = jfloat(renderProgress.animationProgress());
+            auto animationProgress = jfloat(renderProgress.animationProgress());
+            memcpy(data, &animationProgress, sizeof(animationProgress));
             data += sizeof(jfloat);
 
-            *(jfloat *)data = jfloat(renderProgress.animationStartTime());
+            auto animationStartTime = jfloat(renderProgress.animationStartTime());
+            memcpy(data, &animationStartTime, sizeof(animationStartTime));
         }
 #endif
 #if ENABLE(METER_ELEMENT)
@@ -240,10 +248,10 @@ bool RenderThemeJava::paintWidget(
 
         extParams.grow(sizeof(jfloat) + sizeof(jint));
         jbyte *data = extParams.data();
-        *(jfloat *)data = value;
+        memcpy(data, &value, sizeof(value));
         data += sizeof(jfloat);
 
-        *(jint *)data = region;
+        memcpy(data, &region, sizeof(region));
 #endif
     }
 
@@ -662,7 +670,7 @@ bool RenderThemeJava::paintMediaFullscreenButton(const RenderObject& o, const Pa
 
 bool RenderThemeJava::paintMediaPlayButton(const RenderObject& o, const PaintInfo& paintInfo, const IntRect& r)
 {
-    HTMLMediaElement* mediaElement = parentMediaElement(o);
+    auto mediaElement = parentMediaElement(o);
     if (mediaElement == nullptr)
         return false;
 
@@ -677,7 +685,7 @@ bool RenderThemeJava::paintMediaPlayButton(const RenderObject& o, const PaintInf
 
 bool RenderThemeJava::paintMediaMuteButton(const RenderObject&o, const PaintInfo& paintInfo, const IntRect& r)
 {
-    HTMLMediaElement* mediaElement = parentMediaElement(o);
+    auto mediaElement = parentMediaElement(o);
     if (mediaElement == nullptr)
         return false;
 
@@ -696,7 +704,7 @@ bool RenderThemeJava::paintMediaSeekForwardButton(const RenderObject& o, const P
 
 bool RenderThemeJava::paintMediaSliderTrack(const RenderObject&o, const PaintInfo& paintInfo, const IntRect& r)
 {
-    HTMLMediaElement* mediaElement = parentMediaElement(o);
+    auto mediaElement = parentMediaElement(o);
     if (mediaElement == nullptr)
         return false;
 
@@ -736,7 +744,7 @@ bool RenderThemeJava::paintMediaVolumeSliderContainer(const RenderObject& o, con
 
 bool RenderThemeJava::paintMediaVolumeSliderTrack(const RenderObject& o, const PaintInfo& paintInfo, const IntRect& r)
 {
-    HTMLMediaElement* mediaElement = parentMediaElement(o);
+    auto mediaElement = parentMediaElement(o);
     if (mediaElement == nullptr)
         return false;
 

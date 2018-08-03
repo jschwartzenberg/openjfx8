@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink,
 
 + (BOOL) playerAvailable {
     // Check if AVPlayerItemVideoOutput exists, if not we're running on 10.7 or
-    // earlier and have to fall back on QTKit
+    // earlier which is no longer supported
     Class klass = objc_getClass("AVPlayerItemVideoOutput");
     return (klass != nil);
 }
@@ -278,17 +278,40 @@ static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink,
     }
 }
 
+- (void) hlsBugReset {
+    // schedule this to be done when we're not buried inside the AVPlayer callback
+    dispatch_async(dispatch_get_main_queue(), ^{
+        LOGGER_DEBUGMSG(([[NSString stringWithFormat:@"hlsBugReset()"] UTF8String]));
+
+        if (_playerOutput) {
+            _playerOutput.suppressesPlayerRendering = YES;
+
+            CVDisplayLinkStop(_displayLink);
+            [_player.currentItem removeOutput:_playerOutput];
+
+            [_playerOutput requestNotificationOfMediaDataChangeWithAdvanceInterval:ADVANCE_INTERVAL_IN_SECONDS];
+            [_player.currentItem addOutput:_playerOutput];
+
+            self.hlsBugResetCount = 0;
+        }
+    });
+}
+
 - (void) observeValueForKeyPath:(NSString *)keyPath
                        ofObject:(id)object
                          change:(NSDictionary *)change
                         context:(void *)context {
     if (context == AVFMediaPlayerItemStatusContext) {
-        AVPlayerStatus status = (AVPlayerStatus)[[change objectForKey:NSKeyValueChangeNewKey] longValue];
-        if (status == AVPlayerStatusReadyToPlay) {
-            if (!_movieReady) {
-                // Only send this once, though we'll receive notification a few times
-                [self setPlayerState:kPlayerState_READY];
-                _movieReady = true;
+        // According to docs change[NSKeyValueChangeNewKey] can be NSNull when player.currentItem is nil
+        if (![change[NSKeyValueChangeNewKey] isKindOfClass:[NSNull class]]) {
+            AVPlayerStatus status = (AVPlayerStatus)[[change objectForKey:NSKeyValueChangeNewKey] longValue];
+            if (status == AVPlayerStatusReadyToPlay) {
+                if (!_movieReady) {
+                    LOGGER_DEBUGMSG(([[NSString stringWithFormat:@"Setting player to READY state"] UTF8String]));
+                    // Only send this once, though we'll receive notification a few times
+                    [self setPlayerState:kPlayerState_READY];
+                    _movieReady = true;
+                }
             }
         }
     } else if (context == AVFMediaPlayerItemDurationContext) {
@@ -676,11 +699,9 @@ static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeSt
                      * than not playing at all, and this should not happen once
                      * the bug is fixed in AVFoundation.
                      */
-                    [self.player.currentItem removeOutput:playerItemVideoOutput];
-                    [self.player.currentItem addOutput:playerItemVideoOutput];
-                    self.hlsBugResetCount = 0;
+                    [self hlsBugReset];
                     self.lastHostTime = inNow->hostTime;
-                    // fall through to allow it to stop the display link
+                    return kCVReturnSuccess; // hlsBugReset() will stop display link
                 } else {
                     self.hlsBugResetCount++;
                     self.lastHostTime = inNow->hostTime;

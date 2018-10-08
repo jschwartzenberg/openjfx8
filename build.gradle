@@ -131,7 +131,9 @@ void loadProperties(String sourceFileName) {
             for (int i = 1; i < keySplit.length; i++) {
                 key = key + keySplit[i].capitalize();
             }
-            ext[key] = property.value;
+            if (!rootProject.hasProperty(key)) {
+                ext[key] = property.value;
+            }
         }
     }
 }

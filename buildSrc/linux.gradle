@@ -54,31 +54,70 @@ def ccFlags = [
         commonFlags, "-I$JDK_HOME/include", "-I$JDK_HOME/include/linux", "-c",
         "-ffunction-sections", "-fdata-sections",
         IS_DEBUG_NATIVE ? ["-ggdb", "-DVERBOSE"] : ["-O2", "-DNDEBUG"]].flatten()
+def ccFlagsGTK3 = ccFlags
 //ccFlags.addAll(["-Wnon-virtual-dtor", "-Woverloaded-virtual", "-std=c++0x"])
 def linkFlags = ["-static-libgcc", "-static-libstdc++", "-shared", commonFlags,
                  "-Wl,--gc-sections"].flatten()
 def defaultLinkFlags = linkFlags.flatten()
 
-// Create $buildDir/linux_tools.properties file and load props from it
-setupTools("linux_tools",
-    { propFile ->
-        ByteArrayOutputStream results = new ByteArrayOutputStream();
-        exec {
-            commandLine("pkg-config", "--cflags", "gtk+-2.0", "gthread-2.0", "xtst");
-            setStandardOutput(results);
-        }
-        propFile << "cflags=" << results.toString().trim() << "\n";
+def gtk2CCFlags = [  ];
+def gtk3CCFlags = [ "-Wno-deprecated-declarations" ];
+def gtk2LinkFlags = [ ];
+def gtk3LinkFlags = [ ];
+LINUX.buildGTK3 = true
 
-        results = new ByteArrayOutputStream();
+// Create $buildDir/linux_tools.properties file and load props from it
+setupTools("linux_gtk2",
+    { propFile ->
+        ByteArrayOutputStream results1 = new ByteArrayOutputStream();
         exec {
-            commandLine "pkg-config", "--libs", "gtk+-2.0", "gthread-2.0", "xtst"
-            standardOutput = results
+            commandLine("pkg-config", "--cflags", "gtk+-2.0", "gthread-2.0", "xtst")
+            setStandardOutput(results1);
         }
-        propFile << "libs=" << results.toString().trim();
+        propFile << "cflagsGTK2=" << results1.toString().trim() << "\n";
+
+        ByteArrayOutputStream results3 = new ByteArrayOutputStream();
+        exec {
+            commandLine("pkg-config", "--libs", "gtk+-2.0", "gthread-2.0", "xtst")
+            setStandardOutput(results3);
+        }
+        propFile << "libsGTK2=" << results3.toString().trim()  << "\n";
     },
     { properties ->
-        ccFlags.addAll(properties.getProperty("cflags").split(" "))
-        linkFlags.addAll(properties.getProperty("libs").split(" "))
+        gtk2CCFlags.addAll(properties.getProperty("cflagsGTK2").split(" "))
+        gtk2LinkFlags.addAll(properties.getProperty("libsGTK2").split(" "))
+    }
+)
+
+setupTools("linux_gtk3",
+    { propFile ->
+        ByteArrayOutputStream results2 = new ByteArrayOutputStream();
+        exec {
+            commandLine("pkg-config", "--cflags", "gtk+-3.0", "gthread-2.0", "xtst")
+            setStandardOutput(results2);
+            ignoreExitValue(true)
+        }
+        propFile << "cflagsGTK3=" << results2.toString().trim() << "\n";
+
+        ByteArrayOutputStream results4 = new ByteArrayOutputStream();
+        exec {
+            commandLine("pkg-config", "--libs", "gtk+-3.0", "gthread-2.0", "xtst")
+            setStandardOutput(results4);
+            ignoreExitValue(true)
+        }
+        propFile << "libsGTK3=" << results4.toString().trim()  << "\n";
+
+    },
+    { properties ->
+        String ccflags =  properties.getProperty("cflagsGTK3")
+        String ldflags =  properties.getProperty("libsGTK3")
+        if (ccflags != null && ! ccflags.equals("")) {
+            gtk3CCFlags.addAll(properties.getProperty("cflagsGTK3").split(" "))
+            gtk3LinkFlags.addAll(properties.getProperty("libsGTK3").split(" "))
+        } else {
+            logger.info("Warning: GTK3 development packages not found, not building GTK3 support");
+            LINUX.buildGTK3 = false
+        }
     }
 )
 
@@ -135,16 +174,49 @@ def compiler = IS_COMPILE_PARFAIT ? "parfait-gcc" : "gcc";
 def linker = IS_COMPILE_PARFAIT ? "parfait-g++" : "g++";
 
 LINUX.glass = [:]
+LINUX.glass.variants = ["glass", "glassgtk2"]
+if (LINUX.buildGTK3) {
+    logger.info("Building libglassgtk3")
+    LINUX.glass.variants += "glassgtk3"
+} else {
+    logger.warn("NOT Building libglassgtk3")
+}
+
+FileTree ft_gtk_launcher = fileTree("${project(":graphics").projectDir}/src/main/native-glass/gtk/") {
+    include("**/launcher.c")
+}
+
+FileTree ft_gtk = fileTree("${project(":graphics").projectDir}/src/main/native-glass/gtk/") {
+    exclude("**/launcher.c")
+}
+
+LINUX.glass.glass = [:]
 LINUX.glass.javahInclude = [
     "com/sun/glass/events/**",
     "com/sun/glass/ui/*",
     "com/sun/glass/ui/gtk/*"]
-LINUX.glass.nativeSource = file("modules/graphics/src/main/native-glass/gtk")
-LINUX.glass.compiler = compiler
-LINUX.glass.ccFlags = [ccFlags, "-Werror"].flatten()
-LINUX.glass.linker = linker
-LINUX.glass.linkFlags = [linkFlags].flatten()
-LINUX.glass.lib = "glass"
+LINUX.glass.glass.nativeSource = ft_gtk_launcher.getFiles()
+LINUX.glass.glass.compiler = compiler
+LINUX.glass.glass.ccFlags = [ccFlags, gtk2CCFlags,  "-Werror"].flatten()
+LINUX.glass.glass.linker = linker
+LINUX.glass.glass.linkFlags = [linkFlags, "-lX11", "-ldl" ].flatten()
+LINUX.glass.glass.lib = "glass"
+
+LINUX.glass.glassgtk2 = [:]
+LINUX.glass.glassgtk2.nativeSource =  ft_gtk.getFiles()
+LINUX.glass.glassgtk2.compiler = compiler
+LINUX.glass.glassgtk2.ccFlags = [ccFlags, gtk2CCFlags, "-Werror"].flatten()
+LINUX.glass.glassgtk2.linker = linker
+LINUX.glass.glassgtk2.linkFlags = [linkFlags, gtk2LinkFlags ].flatten()
+LINUX.glass.glassgtk2.lib = "glassgtk2"
+
+LINUX.glass.glassgtk3 = [:]
+LINUX.glass.glassgtk3.nativeSource =  ft_gtk.getFiles()
+LINUX.glass.glassgtk3.compiler = compiler
+LINUX.glass.glassgtk3.ccFlags = [ccFlags, gtk3CCFlags, "-Werror"].flatten()
+LINUX.glass.glassgtk3.linker = linker
+LINUX.glass.glassgtk3.linkFlags = [linkFlags, gtk3LinkFlags ].flatten()
+LINUX.glass.glassgtk3.lib = "glassgtk3"
 
 LINUX.decora = [:]
 LINUX.decora.compiler = compiler

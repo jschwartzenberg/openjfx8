@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include "glass_gtkcompat.h"
 #include "glass_general.h"
 #include "glass_evloop.h"
 #include "glass_window.h"
@@ -82,9 +83,8 @@ JNIEXPORT jlong JNICALL Java_com_sun_glass_ui_gtk_GtkWindow__1createWindow
 {
     (void)env;
 
-    WindowContext* parent = JLONG_TO_WINDOW_CTX(owner);
     WindowContext* ctx = new WindowContextTop(obj,
-            parent,
+            (WindowContext*)JLONG_TO_PTR(owner),
             screen,
             glass_mask_to_window_frame_type(mask),
             glass_mask_to_window_type(mask),
@@ -109,9 +109,9 @@ JNIEXPORT jlong JNICALL Java_com_sun_glass_ui_gtk_GtkWindow__1createChildWindow
     WindowContextPlug *parent_ctx = NULL;
     WindowContext *ctx = NULL;
 
-    parent_window = gdk_x11_window_lookup_for_display(
+    parent_window = GLASS_GDK_WINDOW_LOOKUP_FOR_DISPLAY(
                         gdk_display_get_default(),
-                        (Window)PTR_TO_JLONG(owner));
+                        (GdkNativeWindow)PTR_TO_JLONG(owner));
 
     if (parent_window != NULL) {
         parent_ctx = (WindowContextPlug *)g_object_get_data(G_OBJECT(parent_window), GDK_WINDOW_DATA_CONTEXT);

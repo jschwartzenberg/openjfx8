@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -367,6 +367,7 @@ class WindowContextTop: public WindowContextBase {
     WindowFrameType frame_type;
     struct WindowContext *owner;
     WindowGeometry geometry;
+    int stale_config_notifications;
     struct _Resizable{// we can't use set/get gtk_window_resizable function
         _Resizable(): request(REQUEST_NONE), value(true), prev(false),
                 minw(-1), minh(-1), maxw(-1), maxh(-1){}
@@ -426,11 +427,10 @@ private:
     void initialize_frame_extents();
     void window_configure(XWindowChanges *, unsigned int);
     void update_window_constraints();
-    void set_window_resizable(bool);
+    void set_window_resizable(bool, bool);
     void update_ontop_tree(bool);
     bool on_top_inherited();
     bool effective_on_top();
-    void ensure_window_size();
     WindowContextTop(WindowContextTop&);
     WindowContextTop& operator= (const WindowContextTop&);
 };

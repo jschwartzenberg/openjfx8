@@ -420,7 +420,7 @@ WIN.iio = [:]
 WIN.iio.javahInclude = ["com/sun/javafx/iio/**/*"]
 WIN.iio.nativeSource = [
     file("modules/graphics/src/main/native-iio"),
-    file("modules/graphics/src/main/native-iio/libjpeg7")]
+    file("modules/graphics/src/main/native-iio/libjpeg")]
 WIN.iio.compiler = compiler
 WIN.iio.ccFlags = [ccFlags].flatten()
 WIN.iio.linker = linker

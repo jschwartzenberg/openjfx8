@@ -196,7 +196,7 @@ LINUX.iio = [:]
 LINUX.iio.javahInclude = ["com/sun/javafx/iio/**/*"]
 LINUX.iio.nativeSource = [
     file("modules/graphics/src/main/native-iio"),
-    file("modules/graphics/src/main/native-iio/libjpeg7")]
+    file("modules/graphics/src/main/native-iio/libjpeg")]
 LINUX.iio.compiler = compiler
 LINUX.iio.ccFlags = [ccFlags].flatten()
 LINUX.iio.linker = linker

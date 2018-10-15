@@ -194,7 +194,7 @@ MAC.iio = [:]
 MAC.iio.javahInclude = ["com/sun/javafx/iio/**/*"]
 MAC.iio.nativeSource = [
     file("modules/graphics/src/main/native-iio"),
-    file("modules/graphics/src/main/native-iio/libjpeg7")]
+    file("modules/graphics/src/main/native-iio/libjpeg")]
 MAC.iio.compiler = compiler
 MAC.iio.ccFlags = [ccFlags].flatten()
 MAC.iio.linker = linker

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -143,23 +143,16 @@ public:
     void enumerateChosenDirectory(FileChooser*) override;
 #endif
 
-#if USE(ACCELERATED_COMPOSITING)
-    // Allows ports to customize the type of graphics layers created by this page.
-    GraphicsLayerFactory* graphicsLayerFactory() const { return 0; }
+    GraphicsLayerFactory* graphicsLayerFactory() const override { return nullptr; }
 
     // Pass 0 as the GraphicsLayer to detatch the root layer.
-    void attachRootGraphicsLayer(Frame*, GraphicsLayer*) override;
+    void attachRootGraphicsLayer(Frame&, GraphicsLayer*) override;
     // Sets a flag to specify that the next time content is drawn to the window,
     // the changes appear on the screen in synchrony with updates to GraphicsLayers.
     void setNeedsOneShotDrawingSynchronization() override;
     // Sets a flag to specify that the view needs to be updated, so we need
     // to do an eager layout before the drawing.
     void scheduleCompositingLayerFlush() override;
-#else //XXX: implement?
-    void attachRootGraphicsLayer(Frame&, GraphicsLayer*) override {}
-    void setNeedsOneShotDrawingSynchronization() override {}
-    void scheduleCompositingLayerFlush() override {}
-#endif
     void attachViewOverlayGraphicsLayer(Frame&, GraphicsLayer*) override;
 
 #if ENABLE(TOUCH_EVENTS)

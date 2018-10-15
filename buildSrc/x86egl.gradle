@@ -479,7 +479,7 @@ X86EGL.iio = [:]
 X86EGL.iio.javahInclude = ["com/sun/javafx/iio/**/*"]
 X86EGL.iio.nativeSource = [
     file("modules/graphics/src/main/native-iio"),
-    file("modules/graphics/src/main/native-iio/libjpeg7")]
+    file("modules/graphics/src/main/native-iio/libjpeg")]
 X86EGL.iio.compiler = compiler
 X86EGL.iio.ccFlags = iioCFlags
 X86EGL.iio.linker = linker

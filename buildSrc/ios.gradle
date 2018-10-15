@@ -307,7 +307,7 @@ IOS.iio.arm = [:]
 IOS.iio.arm.nativeSource = [
     file("modules/graphics/src/main/native-iio"),
     file("modules/graphics/src/main/native-iio/ios"),
-    file("modules/graphics/src/main/native-iio/libjpeg7")]
+    file("modules/graphics/src/main/native-iio/libjpeg")]
 IOS.iio.arm.compiler = compiler
 IOS.iio.arm.ccFlags = ["-x", "objective-c", ccFlags, "-arch", archArm, "-isysroot", sdkPath(iPhoneOS), "-ffast-math"].flatten()
 IOS.iio.arm.linker = linker
@@ -521,12 +521,12 @@ project(":web") {
             dependsOn(project(":graphics").classes, project(":base").classes)
             description = "Task compiles web component for iOS."
             classpath = files(
-                project(":controls").sourceSets.main.output.classesDir,
-                project(":graphics").sourceSets.main.output.classesDir,
-                project(":base").sourceSets.main.output.classesDir
+                project(":controls").sourceSets.main.java.outputDir,
+                project(":graphics").sourceSets.main.java.outputDir,
+                project(":base").sourceSets.main.java.outputDir
             )
             destinationDir = file("modules/web/build/classes/ios")
-            sourceSets.main.output.classesDir = destinationDir
+            sourceSets.main.java.outputDir = destinationDir
             dependencyCacheDir = file("modules/web/build/dependency-cache")
             source file("modules/web/src/ios/java")
             doLast {
@@ -549,9 +549,9 @@ project(":web") {
 
         addNative(project, "webview")
         javahIosWebview.dependsOn(compileWebJavaIos)
-        javahIosWebview.classpath += files(project(":base").sourceSets.main.output.classesDir,
-                             project(":graphics").sourceSets.main.output.classesDir,
-                             project(":controls").sourceSets.main.output.classesDir)
+        javahIosWebview.classpath += files(project(":base").sourceSets.main.java.outputDir,
+                             project(":graphics").sourceSets.main.java.outputDir,
+                             project(":controls").sourceSets.main.java.outputDir)
 
         jfxrtIos {
             from ("modules/web/build/classes/ios", "modules/web/build/resources/main");
@@ -652,8 +652,8 @@ project(":extensions") {
     afterEvaluate {
 
         addNative(project, "extensions")
-        javahIosExtensions.classpath += files(project(":base").sourceSets.main.output.classesDir,
-                             project(":graphics").sourceSets.main.output.classesDir)
+        javahIosExtensions.classpath += files(project(":base").sourceSets.main.java.outputDir,
+                             project(":graphics").sourceSets.main.java.outputDir)
 
         sdkIos  {
             doLast {

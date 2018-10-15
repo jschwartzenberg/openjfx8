@@ -447,7 +447,7 @@ ARMV7HF.iio = [:]
 ARMV7HF.iio.javahInclude = ["com/sun/javafx/iio/**/*"]
 ARMV7HF.iio.nativeSource = [
     file("modules/graphics/src/main/native-iio"),
-    file("modules/graphics/src/main/native-iio/libjpeg7")]
+    file("modules/graphics/src/main/native-iio/libjpeg")]
 ARMV7HF.iio.compiler = compiler
 ARMV7HF.iio.ccFlags = iioCFlags
 ARMV7HF.iio.linker = linker

@@ -698,7 +698,7 @@ DALVIK.iio = [:]
 DALVIK.iio.javahInclude = ["com/sun/javafx/iio/**/*"]
 DALVIK.iio.nativeSource = [
     file("modules/graphics/src/main/native-iio"),
-    file("modules/graphics/src/main/native-iio/libjpeg7")]
+    file("modules/graphics/src/main/native-iio/libjpeg")]
 DALVIK.iio.compiler = compiler
 DALVIK.iio.ccFlags = [ccFlags, ccWarnFlags, ccArchFlags, ccOptFlags,
     ccDebugFlags, ccDefaultIncludeFlags].flatten()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates.
  * All rights reserved. Use is subject to license terms.
  *
  * This file is available and licensed under the following license:
@@ -84,10 +84,12 @@ TCHAR* LinuxPlatform::ConvertFileSystemStringToString(TCHAR* Source, bool &relea
 }
 
 TString LinuxPlatform::GetModuleFileName() {
+    size_t len = 0;
     TString result;
     DynamicBuffer<TCHAR> buffer(MAX_PATH);
 
-    if (readlink("/proc/self/exe", buffer.GetData(), MAX_PATH - 1) != -1) {
+    if ((len = readlink("/proc/self/exe", buffer.GetData(), MAX_PATH - 1)) != -1) {
+        buffer[len] = '\0';
         result = buffer.GetData();
     }
 

@@ -1,0 +1,85 @@
+/*
+ * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+<<
+public Rectangle getResultBounds(com.sun.javafx.geom.transform.BaseTransform transform,
+                                 com.sun.javafx.geom.Rectangle outputClip,
+                                 com.sun.scenario.effect.ImageData... inputDatas)
+{
+    Rectangle r = inputDatas[0].getTransformedBounds(null);
+    r = getRenderState().getPassResultBounds(r, outputClip);
+    return r;
+}
+
+private int getCount() {
+    // The shader consumes weights 4 at a time so we need to round the
+    // kernel size to the next multiple of 4.
+    return (getRenderState().getPassKernelSize() + 3) / 4;
+}
+
+private float[] getOffset() {
+    return getRenderState().getPassVector();
+}
+
+private FloatBuffer getWeights() {
+    return getRenderState().getPassWeights();
+}
+
+private int getWeightsArrayLength() {
+    return getRenderState().getPassWeightsArrayLength();
+}
+>>
+
+param sampler img;
+param int count;
+// offset.x = dx offset between adjacent weighted convolution samples
+// offset.y = dy offset between adjacent weighted convolution samples
+// offset.z = dx offset to first weighted convolution sample
+// offset.w = dy offset to first weighted convolution sample
+param float4 offset;
+// value for each location in the offsets array:
+//   weights[i].x = weight for pos0 + offset.zw + (i*4+0)*offset.xy
+//   weights[i].y = weight for pos0 + offset.zw + (i*4+1)*offset.xy
+//   weights[i].z = weight for pos0 + offset.zw + (i*4+2)*offset.xy
+//   weights[i].w = weight for pos0 + offset.zw + (i*4+3)*offset.xy
+param float4 weights[%d];
+
+void main()
+{
+    int i;
+    float4 tmp = float4(0.0, 0.0, 0.0, 0.0);
+    float2 loc = pos0 + offset.zw;
+    unroll (%d, 0) for (i = 0; i < count; i++) {
+        tmp += weights[i].x * sample(img, loc);
+        loc += offset.xy;
+        tmp += weights[i].y * sample(img, loc);
+        loc += offset.xy;
+        tmp += weights[i].z * sample(img, loc);
+        loc += offset.xy;
+        tmp += weights[i].w * sample(img, loc);
+        loc += offset.xy;
+    }
+    color = tmp;
+}

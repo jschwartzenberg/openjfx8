@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2016, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates.
  * All rights reserved. Use is subject to license terms.
  *
  * This file is available and licensed under the following license:
@@ -87,9 +87,9 @@ public class AlphaMediaPlayerApp extends Application {
 
     public Parent createContent() {
         String ARTH_URL =
-            "http://download.oracle.com/otndocs/products/javafx/arth_512.flv";
+            "https://download.oracle.com/otndocs/products/javafx/arth_512.flv";
         String FIER_URL =
-            "http://download.oracle.com/otndocs/products/javafx/fier_512.flv";
+            "https://download.oracle.com/otndocs/products/javafx/fier_512.flv";
         arthPlayer = new MediaPlayer(new Media(ARTH_URL));
         arthPlayer.setAutoPlay(true);
         fierPlayer = new MediaPlayer(new Media(FIER_URL));

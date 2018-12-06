@@ -14,6 +14,7 @@ TARGET_NAME = lib$(BASE_NAME).a
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 CFLAGS += -c \
+         -fstack-protector       \
          -Werror=implicit-function-declaration \
          -fPIC \
          -DHAVE_AS_X86_PCREL \
@@ -35,6 +36,8 @@ C_SOURCES = src/closures.c \
             src/x86/ffi64.c \
 
 ASM_SOURCES = src/x86/unix64.S
+
+LDFLAGS += -z relro
 
 ifeq ($(ARCH), x32)
     CFLAGS += -m32

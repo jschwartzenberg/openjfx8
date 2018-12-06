@@ -21,6 +21,7 @@ TARGET_NAME = lib$(BASE_NAME).so
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 CFLAGS += -fPIC \
+         -fstack-protector       \
          -Werror=implicit-function-declaration \
          -DG_DISABLE_CAST_CHECKS \
          -DGLIB_COMPILATION \
@@ -51,6 +52,7 @@ INCLUDES = -I$(SRCBASE_DIR) \
 	   -I$(LIBFFI_DIR)/include
 
 LDFLAGS = -L$(BUILD_DIR) -lffi \
+          -z relro \
           -static-libgcc -static-libstdc++ -Wl,--gc-sections
 
 ifeq ($(ARCH), x32)

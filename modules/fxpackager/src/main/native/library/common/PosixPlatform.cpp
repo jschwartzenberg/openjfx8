@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates.
  * All rights reserved. Use is subject to license terms.
  *
  * This file is available and licensed under the following license:
@@ -41,6 +41,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <sys/sysctl.h>
 #include <iostream>
@@ -232,7 +233,7 @@ bool PosixProcess::Wait() {
 
     //TODO Use waitpid instead of wait
 #ifdef LINUX
-    wait();
+    wait(&status);
 #endif
 #ifdef MAC
     wpid = wait(&status);

@@ -64,18 +64,74 @@ static gboolean call_runnable (gpointer data)
 
 extern "C" {
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+static void init_threads() {
+    gboolean is_g_thread_get_initialized = FALSE;
+    if (glib_check_version(2, 32, 0)) { // < 2.32
+        if (!glib_check_version(2, 20, 0)) {
+            is_g_thread_get_initialized = g_thread_get_initialized();
+        }
+        if (!is_g_thread_get_initialized) {
+            g_thread_init(NULL);
+        }
+    }
+    gdk_threads_init();
+}
+#pragma GCC diagnostic pop
+
+jboolean gtk_verbose = JNI_FALSE;
+
 /*
  * Class:     com_sun_glass_ui_gtk_GtkApplication
- * Method:    _isDisplayValid
- * Signature: ()Z
+ * Method:    _initGTK
+ * Signature: (IZ)I
  */
-JNIEXPORT jboolean JNICALL Java_com_sun_glass_ui_gtk_GtkApplication__1isDisplayValid
-  (JNIEnv * env, jclass clazz)
+JNIEXPORT jint JNICALL Java_com_sun_glass_ui_gtk_GtkApplication__1initGTK
+  (JNIEnv *env, jclass clazz, jint version, jboolean verbose)
 {
+    (void) clazz;
+    (void) version;
+
+    gtk_verbose = verbose;
+
+    env->ExceptionClear();
+    init_threads();
+
+    gdk_threads_enter();
+    gtk_init(NULL, NULL);
+
+    return JNI_TRUE;
+}
+
+/*
+ * Class:     com_sun_glass_ui_gtk_GtkApplication
+ * Method:    _queryLibrary
+ * Signature: Signature: (IZ)I
+ */
+JNIEXPORT jint JNICALL Java_com_sun_glass_ui_gtk_GtkApplication__1queryLibrary
+  (JNIEnv *env, jclass clazz, jint suggestedVersion, jboolean verbose)
+{
+    // If we are being called, then the launcher is
+    // not in use, and we are in the proper glass library already.
+    // This can be done by renaming the gtk versioned native
+    // libraries to be libglass.so
+    // Note: we will make no effort to complain if the suggestedVersion
+    // is out of phase.
+
     (void)env;
     (void)clazz;
+    (void)suggestedVersion;
+    (void)verbose;
 
-    return is_display_valid();
+    Display *display = XOpenDisplay(NULL);
+    if (display == NULL) {
+        return com_sun_glass_ui_gtk_GtkApplication_QUERY_NO_DISPLAY;
+    }
+    XCloseDisplay(display);
+
+    return com_sun_glass_ui_gtk_GtkApplication_QUERY_USE_CURRENT;
 }
 
 /*
@@ -92,6 +148,7 @@ JNIEXPORT void JNICALL Java_com_sun_glass_ui_gtk_GtkApplication__1init
     process_events_prev = (GdkEventFunc) handler;
     disableGrab = (gboolean) _disableGrab;
 
+    glass_gdk_x11_display_set_window_scale(gdk_display_get_default(), 1);
     gdk_event_handler_set(process_events, NULL, NULL);
 
     GdkScreen *default_gdk_screen = gdk_screen_get_default();

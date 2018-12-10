@@ -340,11 +340,11 @@ ext.IS_TEST_PACKAGER_DMG = Boolean.parseBoolean(TEST_PACKAGER_DMG)
 
 // Define the SWT.jar that we are going to have to download during the build process based
 // on what platform we are compiling from (not based on our target).
-ext.SWT_FILE_NAME = IS_MAC ? "org.eclipse.swt.cocoa.macosx.x86_64_3.7.2.v3740f" :
-    IS_WINDOWS && IS_64 ? "org.eclipse.swt.win32.win32.x86_64_3.7.2.v3740f" :
-    IS_WINDOWS && !IS_64 ? "org.eclipse.swt.win32.win32.x86_3.7.2.v3740f" :
-    IS_LINUX && IS_64 ? "org.eclipse.swt.gtk.linux.x86_64_3.7.2.v3740f" :
-    IS_LINUX && !IS_64 ? "org.eclipse.swt.gtk.linux.x86_3.7.2.v3740f" : ""
+ext.SWT_FILE_NAME = IS_MAC ? "org.eclipse.swt.cocoa.macosx.x86_64_3.105.3.v20170228-0512" :
+    IS_WINDOWS && IS_64 ? "org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512" :
+    IS_WINDOWS && !IS_64 ? "org.eclipse.swt.win32.win32.x86_3.105.3.v20170228-0512" :
+    IS_LINUX && IS_64 ? "org.eclipse.swt.gtk.linux.x86_64_3.105.3.v20170228-0512" :
+    IS_LINUX && !IS_64 ? "org.eclipse.swt.gtk.linux.x86_3.105.3.v20170228-0512" : ""
 
 // Build javadocs only if BUILD_JAVADOC=true
 defineProperty("BUILD_JAVADOC", "false")
@@ -1139,7 +1139,7 @@ allprojects {
         repositories {
             mavenCentral()
             ivy {
-                url "http://download.eclipse.org/eclipse/updates/3.7/R-3.7.2-201202080800/plugins/"
+                url "http://download.eclipse.org/eclipse/updates/4.6/R-4.6.3-201703010400/plugins/"
                 layout "pattern", {
                     artifact "[artifact].[ext]"
                 }
@@ -2611,7 +2611,7 @@ project(":web") {
                         def lFlags = webkitProperties.linkFlags?.join(' ') ?: ''
                         // -shared flag should be omitted while creating executable.
                         def exeFlags = webkitProperties.linkFlags?.join(' ')?.replace('-shared', '') ?: ''
-                        cmakeArgs = "$cmakeArgs -DCMAKE_C_FLAGS='${cFlags}' -DCMAKE_CXX_FLAGS='${cFlags}'"
+                        cmakeArgs = "$cmakeArgs -DCMAKE_C_FLAGS='${cFlags}' -DCMAKE_CXX_FLAGS='${cFlags}' -DCMAKE_ASM_FLAGS='${cFlags}'"
                         cmakeArgs = "$cmakeArgs -DCMAKE_SHARED_LINKER_FLAGS='${lFlags}' -DCMAKE_EXE_LINKER_FLAGS='${exeFlags}'"
                     } else if (t.name.startsWith("arm")) {
                         fail("ARM target is not supported as of now.")

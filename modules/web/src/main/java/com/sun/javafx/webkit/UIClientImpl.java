@@ -33,16 +33,13 @@ import static javafx.scene.web.WebEvent.RESIZED;
 import static javafx.scene.web.WebEvent.STATUS_CHANGED;
 import static javafx.scene.web.WebEvent.VISIBILITY_CHANGED;
 
-import com.sun.javafx.tk.Toolkit;
 import com.sun.webkit.UIClient;
 import com.sun.webkit.WebPage;
 import com.sun.webkit.graphics.WCImage;
 import com.sun.webkit.graphics.WCRectangle;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -53,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.image.Image;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
@@ -63,6 +59,7 @@ import javafx.scene.web.PromptData;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
@@ -333,7 +330,7 @@ public final class UIClientImpl implements UIClient {
                 //never happens
             }
         }
-        if (image != null) {
+        if (image != null && !image.isNull()) {
             ByteBuffer dragImageOffset = ByteBuffer.allocate(8);
             dragImageOffset.rewind();
             dragImageOffset.putInt(imageOffsetX);
@@ -355,26 +352,18 @@ public final class UIClientImpl implements UIClient {
             //QuantumClipboard.putContent have to be rewritten in Glass manner
             //with postponed data requests (DelayedCallback data object).
             if (isImageSource) {
-                Object platformImage = image.getWidth() > 0 && image.getHeight() > 0 ?
-                        image.getPlatformImage() : null;
                 String fileExtension = image.getFileExtension();
-                if (platformImage != null) {
-                    try {
-                        File temp = File.createTempFile("jfx", "." + fileExtension);
-                        temp.deleteOnExit();
-                        ImageIO.write(
-                            toBufferedImage(Image.impl_fromPlatformImage(
-                                Toolkit.getToolkit().loadPlatformImage(
-                                    platformImage
-                                )
-                            )),
-                            fileExtension,
-                            temp);
-                        content.put(DataFormat.FILES, Arrays.asList(temp));
-                    } catch (IOException | SecurityException e) {
-                        //That is ok. It was just an attempt.
-                        //e.printStackTrace();
-                    }
+                try {
+                    File temp = File.createTempFile("jfx", "." + fileExtension);
+                    temp.deleteOnExit();
+                    ImageIO.write(
+                        image.toBufferedImage(),
+                        fileExtension,
+                        temp);
+                    content.put(DataFormat.FILES, Arrays.asList(temp));
+                } catch (IOException | SecurityException e) {
+                    //That is ok. It was just an attempt.
+                    //e.printStackTrace();
                 }
             }
         }
@@ -392,23 +381,6 @@ public final class UIClientImpl implements UIClient {
 
     @Override public boolean isDragConfirmed() {
         return accessor.getView() != null && content != null;
-    }
-
-    // Method to implement the following via reflection:
-    //     SwingFXUtils.fromFXImage(img, null)
-    public static BufferedImage toBufferedImage(Image img) {
-        try {
-            Class swingFXUtilsCls = Class.forName("javafx.embed.swing.SwingFXUtils");
-            Method m_fromFXImage = swingFXUtilsCls.getMethod("fromFXImage",
-                    Image.class, BufferedImage.class);
-            Object bimg = m_fromFXImage.invoke(null, img, null);
-            return (BufferedImage)bimg;
-        } catch (Exception ex) {
-            ex.printStackTrace(System.err);
-        }
-
-        // return null upon any exception
-        return null;
     }
 
 }

@@ -99,10 +99,6 @@ void defineProperty(String name, Properties props, String defaultValue) {
  * Converts cygwin style paths to windows style paths, but with a forward slash.
  * This method is safe to call from any platform, and will only do work if
  * called on Windows (in all other cases it simply returns the supplied path.
- * In the future I would like to modify this so that it only does work if
- * cygwin is installed, as I hope one day to remove the requirement to build
- * with cygwin, but at present (due to GStreamer / Webkit) cygwin is needed
- * anyway.
  *
  * @param path the path to convert
  * @return the path converted to windows style, if on windows, otherwise it
@@ -111,13 +107,9 @@ void defineProperty(String name, Properties props, String defaultValue) {
 String cygpath(String path) {
     if (!IS_WINDOWS) return path;
     if (path == null || "".equals(path)) return path;
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    logger.info("Converting path '$path' via cygpath")
-    exec {
-        standardOutput = out
-        commandLine "cmd", "/c", "cygpath", "-m", path
-    }
-    return out.toString().trim();
+    String ret = path.replaceAll('\\\\', '/')
+    logger.info("Converting path '$path' via cygpath to "+ret)
+    return ret
 }
 
 void loadProperties(String sourceFileName) {
@@ -338,6 +330,10 @@ ext.IS_RETAIN_PACKAGER_TESTS = Boolean.parseBoolean(RETAIN_PACKAGER_TESTS)
 defineProperty("TEST_PACKAGER_DMG", "false")
 ext.IS_TEST_PACKAGER_DMG = Boolean.parseBoolean(TEST_PACKAGER_DMG)
 
+// BUILD_TOOLS_DOWNLOAD_SCRIPT specifies a path of a gradle script which downloads
+// required build tools.
+defineProperty("BUILD_TOOLS_DOWNLOAD_SCRIPT", "")
+
 // Define the SWT.jar that we are going to have to download during the build process based
 // on what platform we are compiling from (not based on our target).
 ext.SWT_FILE_NAME = IS_MAC ? "org.eclipse.swt.cocoa.macosx.x86_64_3.105.3.v20170228-0512" :
@@ -518,7 +514,6 @@ void fetchExternalTools(String configName, List packages, File destdir, boolean 
                 rootProject.dependencies.add(fetchToolsConfig, "javafx:$basename:$ver", {
                     artifact {
                         name = basename
-                        version = ver
                         type = ext
                     }
                 })
@@ -550,7 +545,7 @@ void fetchExternalTools(String configName, List packages, File destdir, boolean 
                 def String basename = pkgname.substring(0,pkgname.lastIndexOf("."))
                 def File pkgdir = file("$destdir/$basename")
 
-                if (pkgname.endsWith(".tgz")) {
+                if (pkgname.endsWith(".tgz") || pkgname.endsWith("tar.gz")) {
                     if (IS_LINUX || IS_MAC) {
                         // use native tar to support symlinks
                         pkgdir.mkdirs()
@@ -572,7 +567,7 @@ void fetchExternalTools(String configName, List packages, File destdir, boolean 
                 } else {
                     throw new GradleException("Unhandled package type for compile package ${pkgname}")
                 }
-                srcball.deleteOnExit();
+                srcball.delete();
             }
         } else {
             logger.quiet "all tool packages are present $packages"
@@ -594,6 +589,11 @@ void fetchExternalTools(String configName, List packages, File destdir, boolean 
             logger.quiet "all tool packages are present $packages"
         }
     }
+}
+
+if (BUILD_TOOLS_DOWNLOAD_SCRIPT != "") {
+    println "Include build tools download script:${BUILD_TOOLS_DOWNLOAD_SCRIPT}"
+    apply from: BUILD_TOOLS_DOWNLOAD_SCRIPT
 }
 
 // Now we need to define the native compilation tasks. The set of parameters to
@@ -2584,23 +2584,13 @@ project(":web") {
                 exec {
                     workingDir("$projectDir/src/main/native")
                     def cmakeArgs = "-DENABLE_TOOLS=1"
+                    cmakeArgs = " $cmakeArgs -DCMAKE_C_COMPILER='${webkitProperties.compiler}'"
                     if (t.name == "win") {
-                        String parfaitPath = IS_COMPILE_PARFAIT ? System.getenv().get("PARFAIT_PATH") + ";" : "";
-                        Map environmentSettings = new HashMap(WINDOWS_NATIVE_COMPILE_ENVIRONMENT)
-                        environmentSettings["PATH"] = parfaitPath + "$WINDOWS_VS_PATH"
-                        /* To build with ICU:
-                        1. Download http://javaweb.us.oracle.com/jcg/fx-webrevs/RT-17164/WebKitLibrariesICU.zip
-                        and unzip it to WebKitLibraries folder.
-                        2. Copy DLLs from
-                        WebKitLibrariesICU.zip\WebKitLibraries\import\runtime
-                        to %windir%\system32
-                        3. Uncomment the line below
-                         */
-                        // args("--icu-unicode")
+                        environment(WINDOWS_NATIVE_COMPILE_ENVIRONMENT)
                     } else if (t.name == "mac") {
-                        cmakeArgs = "-DCMAKE_OSX_DEPLOYMENT_TARGET=$MACOSX_MIN_VERSION -DCMAKE_OSX_SYSROOT=$MACOSX_SDK_PATH"
+                        cmakeArgs = " $cmakeArgs -DCMAKE_OSX_DEPLOYMENT_TARGET=$MACOSX_MIN_VERSION -DCMAKE_OSX_SYSROOT=$MACOSX_SDK_PATH"
                     } else if (t.name == "linux") {
-                        cmakeArgs = "-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_C_COMPILER=${webkitProperties.compiler}"
+                        cmakeArgs = " $cmakeArgs -DCMAKE_SYSTEM_NAME=Linux"
                         if (IS_64) {
                             cmakeArgs = "$cmakeArgs -DCMAKE_SYSTEM_PROCESSOR=x86_64"
                         } else {
@@ -2621,7 +2611,12 @@ project(":web") {
                         environment([
                             "COMPILE_PARFAIT" : "true"
                         ])
+                        environment "PATH", System.env.PARFAIT_PATH + File.pathSeparator + environment.PATH
                         cmakeArgs = "-DCMAKE_C_COMPILER=parfait-gcc -DCMAKE_CXX_COMPILER=parfait-g++"
+                    }
+
+                    if (project.hasProperty('toolsPath')) {
+                        environment "PATH", toolsPath + File.pathSeparator + environment.PATH
                     }
 
                     environment([

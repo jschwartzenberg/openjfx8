@@ -27,6 +27,7 @@ CFLAGS = -fPIC                   \
          -Wextra                 \
          -Wformat-security       \
          -Werror=implicit-function-declaration \
+         -fstack-protector       \
          -msse2                  \
          -fbuiltin               \
          -DHAVE_STDINT_H         \
@@ -51,6 +52,7 @@ INCLUDES= -I../../../plugins                          \
           -I$(GLIB_DIR)/gmodule
 
 LDFLAGS = -L$(BUILD_DIR)    \
+          -z relro          \
           -lgstreamer-lite  \
           -lglib-lite  \
           -static-libgcc -static-libstdc++ -Wl,--gc-sections

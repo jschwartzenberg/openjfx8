@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -578,7 +578,7 @@ public class JavaScriptBridgeTest extends TestBase {
             bind("alist", alist);
             Integer[] iarr = new Integer[4];
             bind("iarr", iarr);
-            Object r = web.executeScript("alist.toArray(iarr)");
+            Object r = web.executeScript("alist['toArray(Object[])'](iarr)");
             assertSame(iarr, r);
             assertEquals("98/87/76/null",
                          iarr[0]+"/"+iarr[1]+"/"+iarr[2]+"/"+iarr[3]);

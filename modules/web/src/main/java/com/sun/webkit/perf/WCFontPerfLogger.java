@@ -28,7 +28,7 @@ package com.sun.webkit.perf;
 import java.util.logging.Logger;
 
 import com.sun.webkit.graphics.WCFont;
-import com.sun.webkit.graphics.WCGlyphBuffer;
+import com.sun.webkit.graphics.WCTextRun;
 
 public final class WCFontPerfLogger extends WCFont {
     private static final Logger log =
@@ -65,19 +65,11 @@ public final class WCFontPerfLogger extends WCFont {
         return res;
     }
 
-    public int getOffsetForPosition(String str, float x) {
-        logger.resumeCount("GETOFFSETFORPOSITION");
-        int res = fnt.getOffsetForPosition(str, x);
-        logger.suspendCount("GETOFFSETFORPOSITION");
-        return res;
-    }
-
-    public WCGlyphBuffer getGlyphsAndAdvances(String str, int from, int to,
-                                              boolean rtl) {
-        logger.resumeCount("GETGLYPHSANDADVANCESFORCOMPLEXTEXT");
-        WCGlyphBuffer adv = fnt.getGlyphsAndAdvances(str, from, to, rtl);
-        logger.suspendCount("GETGLYPHSANDADVANCESFORCOMPLEXTEXT");
-        return adv;
+    public WCTextRun[] getTextRuns(String str) {
+        logger.resumeCount("GETTEXTRUNS");
+        final WCTextRun runs[] = fnt.getTextRuns(str);
+        logger.suspendCount("GETTEXTRUNS");
+        return runs;
     }
 
     public int[] getGlyphCodes(char[] chars) {
@@ -105,20 +97,6 @@ public final class WCFontPerfLogger extends WCFont {
         logger.resumeCount("GETGLYPHBOUNDINGBOX");
         float[] res = fnt.getGlyphBoundingBox(glyph);
         logger.suspendCount("GETGLYPHBOUNDINGBOX");
-        return res;
-    }
-
-    public double getStringWidth(String str) {
-        logger.resumeCount("GETSTRINGLENGTH");
-        double res = fnt.getStringWidth(str);
-        logger.suspendCount("GETSTRINGLENGTH");
-        return res;
-    }
-
-    public double[] getStringBounds(String str, int from, int to, boolean rtl) {
-        logger.resumeCount("GETSTRINGBOUNDS");
-        double[] res = fnt.getStringBounds(str, from, to, rtl);
-        logger.suspendCount("GETSTRINGBOUNDS");
         return res;
     }
 

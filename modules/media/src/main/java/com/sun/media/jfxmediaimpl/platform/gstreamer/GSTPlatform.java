@@ -154,6 +154,13 @@ public final class GSTPlatform extends Platform {
                         // Ignore it.
                     }
 
+                    // Check if error event was set. We will not go to READY or
+                    // HALT state in this case. Error event is basically same
+                    // as HALT.
+                    if (player.isErrorEventCached()) {
+                        break;
+                    }
+
                     state = player.getState();
                 }
 

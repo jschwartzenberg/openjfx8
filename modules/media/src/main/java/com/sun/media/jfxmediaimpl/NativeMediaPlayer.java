@@ -1411,6 +1411,17 @@ public abstract class NativeMediaPlayer implements MediaPlayer, MarkerStateListe
         }
     }
 
+    @Override
+    public boolean isErrorEventCached() {
+        synchronized (cachedErrorEvents) {
+            if (cachedErrorEvents.isEmpty()) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
     //**************************************************************************
     //***** Non-JNI methods called by the native layer. These methods are called
     //***** from the native layer via the invocation API. Their purpose is to

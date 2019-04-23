@@ -349,4 +349,9 @@ public interface MediaPlayer {
      * after this method is invoked.
      */
     public void dispose();
+
+    /**
+     * Returns true if we have cached error event.
+     */
+    public boolean isErrorEventCached();
 }

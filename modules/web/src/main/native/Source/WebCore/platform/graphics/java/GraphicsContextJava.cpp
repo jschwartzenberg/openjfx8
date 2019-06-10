@@ -84,6 +84,9 @@ static void setGradient(Gradient &gradient, PlatformGraphicsContext* context, ji
             }
     );
 
+    p0 = gt.mapPoint(p0);
+    p1 = gt.mapPoint(p1);
+
     context->rq().freeSpace(4 * 11 + 8 * nStops)
     << id
     << (jfloat)p0.x()

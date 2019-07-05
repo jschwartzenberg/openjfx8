@@ -297,7 +297,7 @@ defineProperty("GRADLE_VERSION_CHECK", "true")
 ext.IS_GRADLE_VERSION_CHECK = Boolean.parseBoolean(GRADLE_VERSION_CHECK)
 
 // COMPILE_WEBKIT specifies whether to build all of webkit.
-defineProperty("COMPILE_WEBKIT", "false")
+defineProperty("COMPILE_WEBKIT", "true")
 ext.IS_COMPILE_WEBKIT = Boolean.parseBoolean(COMPILE_WEBKIT)
 
 // COMPILE_MEDIA specifies whether to build all of media.

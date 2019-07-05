@@ -11,7 +11,7 @@
     </target>
 
     <target name="jar-sb-samples">
-        <ant dir="samples" target="jar" inheritAll="true"/>
+<!--         <ant dir="samples" target="jar" inheritAll="true"/> -->
     </target>
 
     <target name="clean-sb-samples">

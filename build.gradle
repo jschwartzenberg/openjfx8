@@ -301,8 +301,12 @@ defineProperty("COMPILE_WEBKIT", "true")
 ext.IS_COMPILE_WEBKIT = Boolean.parseBoolean(COMPILE_WEBKIT)
 
 // COMPILE_MEDIA specifies whether to build all of media.
-defineProperty("COMPILE_MEDIA", "false")
+defineProperty("COMPILE_MEDIA", "true")
 ext.IS_COMPILE_MEDIA = Boolean.parseBoolean(COMPILE_MEDIA)
+
+// COMPILE_AVPLUGIN specifies whether to build the avplugin, requires COMPILE_MEDIA=true.
+defineProperty("COMPILE_AVPLUGIN", "false")
+ext.IS_COMPILE_AVPLUGIN = Boolean.parseBoolean(COMPILE_AVPLUGIN)
 
 // COMPILE_PANGO specifies whether to build javafx_font_pango.
 defineProperty("COMPILE_PANGO", "${IS_LINUX}")
@@ -2340,7 +2344,7 @@ project(":media") {
 
             if (t.name == "linux") {
                 def buildAVPlugin = task( "buildAVPlugin", dependsOn: [buildPlugins]) {
-                    enabled = IS_COMPILE_MEDIA
+                    enabled = IS_COMPILE_MEDIA && IS_COMPILE_AVPLUGIN
 
                     doLast {
                         if (project.ext.properties.containsKey("libav")) {

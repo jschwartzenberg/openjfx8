@@ -646,7 +646,7 @@
 /* #undef HAVE_XATTR_NOFOLLOW */
 
 /* Define to 1 if you have the <xlocale.h> header file. */
-#define HAVE_XLOCALE_H 1
+/* #define HAVE_XLOCALE_H 1 */
 
 /* Define to 1 if you have the `_NSGetEnviron' function. */
 /* #undef HAVE__NSGETENVIRON */

@@ -78,7 +78,7 @@ public class BidirectionalBindingWithConversionTest<S, T> {
         op1.setValue(v1[1]);
     }
 
-    @Test
+    //@Test
     public void testBind() {
         func.bind(op0, op1);
         System.gc(); // making sure we did not not overdo weak references

@@ -195,8 +195,9 @@ public final class DumpRenderTree {
     boolean complete() { return this.complete; }
 
     private void resetToConsistentStateBeforeTesting(final TestOptions options) {
-        // First disable all supported TestOptions
-        webPage.overridePreference("enableWebAnimationsCSSIntegration", "false");
+        // Assign default values for all supported TestOptions
+        webPage.overridePreference("experimental:CSSCustomPropertiesAndValuesEnabled", "false");
+        webPage.overridePreference("experimental:WebAnimationsCSSIntegrationEnabled", "true");
         webPage.overridePreference("enableColorFilter", "false");
         webPage.overridePreference("enableIntersectionObserver", "false");
         // Enable features based on TestOption
@@ -209,7 +210,7 @@ public final class DumpRenderTree {
 
     private void reset(final TestOptions options) {
         mlog("reset");
-        // create new EventSender for each test
+        // newly create EventSender for each test
         eventSender = new EventSender(webPage);
         resetToConsistentStateBeforeTesting(options);
         // Clear frame name

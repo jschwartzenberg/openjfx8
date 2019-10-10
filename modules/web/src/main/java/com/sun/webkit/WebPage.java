@@ -997,7 +997,8 @@ public final class WebPage {
                 log.log(Level.FINE, "getClientSelectedText() request for a disposed web page.");
                 return "";
             }
-            return twkGetSelectedText(getPage());
+            final String selectedText = twkGetSelectedText(getPage());
+            return selectedText != null ? selectedText : "";
 
         } finally {
             unlockPage();

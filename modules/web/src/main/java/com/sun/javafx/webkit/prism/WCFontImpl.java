@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ import static com.sun.javafx.webkit.prism.TextUtilities.getLayoutBounds;
 import com.sun.prism.GraphicsPipeline;
 import com.sun.webkit.graphics.WCFont;
 import com.sun.webkit.graphics.WCTextRun;
-import com.sun.webkit.graphics.WCTextRunImpl;
+import com.sun.javafx.webkit.prism.WCTextRunImpl;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;

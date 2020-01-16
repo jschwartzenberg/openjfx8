@@ -419,7 +419,7 @@ public class DOMTest extends TestBase {
 
     // JDK-8233747
     @Test public void testCreateAttribute() {
-        final Document doc = getDocumentFor("src/test/resources/test/html/dom.html");
+        final Document doc = getDocumentFor("src/test/resources/html/dom.html");
         submit(() -> {
             try {
                 //invalid attribute

@@ -321,7 +321,7 @@ defineProperty("COMPILE_PARFAIT", "false")
 ext.IS_COMPILE_PARFAIT = Boolean.parseBoolean(COMPILE_PARFAIT)
 
 // COMPILE_JFR specifies whether to build code that logs to JRockit Flight Recorder
-defineProperty("COMPILE_JFR", Boolean.toString(file("$JDK_HOME/jre/lib/jfr.jar").exists()))
+defineProperty("COMPILE_JFR", "false")
 ext.IS_COMPILE_JFR = Boolean.parseBoolean(COMPILE_JFR)
 
 // RETAIN_PACKAGER_TESTS specifies whether the tests in fxpackager should

@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.sun.prism.BasicStroke;
+import java.util.Arrays;
 
 final class WCPathImpl extends WCPath<Path2D> {
     private final Path2D path;
@@ -347,5 +349,32 @@ final class WCPathImpl extends WCPath<Path2D> {
                     new Object[] {getID(), mxx, myx, mxy, myy, mxt, myt});
         }
         path.transform(BaseTransform.getInstance(mxx, myx, mxy, myy, mxt, myt));
+    }
+
+    @Override
+    public boolean strokeContains(double x, double y,
+                                  double thickness, double miterLimit,
+                                  int cap, int join, double dashOffset,
+                                  double[] dashArray) {
+
+        BasicStroke stroke = new BasicStroke(
+            (float) thickness, cap, join, (float) miterLimit);
+
+        if (dashArray.length > 0) {
+            stroke.set(dashArray, (float) dashOffset);
+        }
+
+        boolean result = stroke
+            .createCenteredStrokedShape(path)
+            .contains((float) x, (float) y);
+
+        if (log.isLoggable(Level.FINE)) {
+            log.log(Level.FINE,
+                "WCPathImpl({0}).strokeContains({1},{2},{3},{4},{5},{6},{7},{8}) = {9}",
+                new Object[]{getID(), x, y, thickness, miterLimit, cap, join,
+                             dashOffset, Arrays.toString(dashArray), result});
+        }
+
+        return result;
     }
 }
